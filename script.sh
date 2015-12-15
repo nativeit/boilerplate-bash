@@ -2,6 +2,12 @@
 #
 # A lot of this is based on options.bash by Daniel Mills.
 # @see https://github.com/e36freak/tools/blob/master/options.bash
+# @see http://www.kfirlavi.com/blog/2012/11/14/defensive-bash-programming
+
+readonly PROGNAME=$(basename $0)
+readonly PROGDIR=$(readlink -m $(dirname $0))
+readonly ARGS="$@"
+
 
 # Preamble {{{
 
@@ -55,6 +61,30 @@ confirm() {
   [[ $REPLY =~ ^[Yy]$ ]];
 }
 
+is_empty() {
+    local var=$1
+
+    [[ -z $var ]]
+}
+
+is_not_empty() {
+    local var=$1
+
+    [[ -n $var ]]
+}
+
+is_file() {
+    local file=$1
+
+    [[ -f $file ]]
+}
+
+is_dir() {
+    local dir=$1
+
+    [[ -d $dir ]]
+}
+
 # }}}
 # Script logic -- TOUCH THIS {{{
 
@@ -66,7 +96,7 @@ interactive_opts=(username password)
 
 # Print usage
 usage() {
-  echo -n "$(basename $0) [OPTION]... [FILE]...
+  echo -n "$PROGNAME [OPTION]... [FILE]...
 
 Description of this script.
 
@@ -88,10 +118,12 @@ rollback() {
   die
 }
 
+#################################################################################################
 # Put your script here
 main() {
   echo -n
 }
+#################################################################################################
 
 # }}}
 # Boilerplate {{{
@@ -191,7 +223,7 @@ safe_exit() {
 while [[ $1 = -?* ]]; do
   case $1 in
     -h|--help) usage >&2; safe_exit ;;
-    --version) out "$(basename $0) $version"; safe_exit ;;
+    --version) out "$PROGNAME $version"; safe_exit ;;
     -u|--username) shift; username=$1 ;;
     -p|--password) shift; password=$1 ;;
     -v|--verbose) verbose=1 ;;
