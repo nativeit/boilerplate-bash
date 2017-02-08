@@ -25,9 +25,10 @@ echo -n '
 flag|h|help|show usage
 flag|q|quiet|no output
 flag|v|verbose|output more
-option|s|speed|transfer speed (slow/fast)|fast
-param|1|output|action to: ARCHIVE/SEARCH/RESTORE/CONFIG
-param|n|input|input file or folder
+option|a|opt1|option 1|10
+option|b|opt2|option 2|fast
+param|1|output|output file
+param|n|input|input file(s)
 '
 }
 
@@ -205,9 +206,6 @@ parse_options() {
 
 ## Put your script here
 main() {
-  if [[ $help == 1 ]] ; then
-    usage >&2 ; safe_exit
-  fi
   out "this is input: [$input]"
   err "error output"
   success "success output"
