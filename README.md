@@ -2,10 +2,9 @@
 
 ## Features
 
-* Interactive mode
 * Quiet mode
-* CLI options parser supporting `-n --name --name=Oxy --name Oxy`
-* Also supports bundling of flags. ie. `-vf` instead of `-v -f`
+* Verbose mode
+* CLI options parser supporting `-n --name --name Oxy`
 * Helper functions for printing messages.
 * Automatically remove color escape codes if the script is piped.
 
