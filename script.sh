@@ -1,258 +1,219 @@
 #!/bin/bash
-#
-# A lot of this is based on options.bash by Daniel Mills.
-# @see https://github.com/e36freak/tools/blob/master/options.bash
-# @see http://www.kfirlavi.com/blog/2012/11/14/defensive-bash-programming
+# first set some execution parameters
+prefix_fmt=""
+# uncomment next line to have date/time prefix for every output line
+#prefix_fmt='+%Y-%m-%d %H:%M:%S :: '
+
+runasroot=0
+# runasroot = 0 :: don't check anything
+# runasroot = 1 :: script MUST run as root
+# runasroot = -1 :: script MAY NOT run as root
+
+### Change the next lines to reflect which flags/options/parameters you need
+### flag:   switch a flag 'on' / no extra parameter / e.g. "-v" for verbose
+# flag|<short>|<long>|<description>|<default>
+
+### option: set an option value / 1 extra parameter / e.g. "-l error.log" for logging to file
+# option|<short>|<long>|<description>|<default>
+
+### param:  comes after the options
+#param|<type>|<long>|<description>
+# where <type> = 1 for single parameters or <type> = n for (last) parameter that can be a list
+list_options() {
+echo -n '
+flag|h|help|show usage
+flag|q|quiet|no output
+flag|v|verbose|output more
+option|a|opt1|option 1|10
+option|b|opt2|option 2|fast
+param|1|output|output file
+param|n|input|input file(s)
+'
+}
+
+readonly PROGVERS="v0.2"
+#####################################################################
+################### DO NOT MODIFY BELOW THIS LINE ###################
 
 readonly PROGNAME=$(basename $0)
-readonly PROGDIR=$(readlink -m $(dirname $0))
+readonly PROGDIR=$(cd $(dirname $0); pwd)
+PROGDATE=$(stat -c %y "$PROGDIR/$PROGNAME" 2>/dev/null | cut -c1-16) # generic linux
+if [[ -z $PROGDATE ]] ; then
+  PROGDATE=$(stat -f "%Sm" "$PROGDIR/$PROGNAME" 2>/dev/null) # for MacOS
+fi
+
 readonly ARGS="$@"
-
-
-# Preamble {{{
-
-# Exit immediately on error
-set -e
-
-# Detect whether output is piped or not.
-[[ -t 1 ]] && piped=0 || piped=1
+#set -e                                  # Exit immediately on error
+verbose=0
+quiet=0
+piped=0
+[[ -t 1 ]] && piped=0 || piped=1        # detect if out put is piped
 
 # Defaults
-force=0
-quiet=0
-verbose=0
-interactive=0
 args=()
-
-# }}}
-# Helpers {{{
 
 out() {
   ((quiet)) && return
-
   local message="$@"
+  local prefix=""
+  if [[ -n $prefix_fmt ]]; then
+    prefix=$(date "$prefix_fmt")
+  fi
   if ((piped)); then
     message=$(echo $message | sed '
       s/\\[0-9]\{3\}\[[0-9]\(;[0-9]\{2\}\)\?m//g;
-      s/✖/Error:/g;
-      s/✔/Success:/g;
+      s/✖/ERROR:/g;
+      s/➨/ALERT:/g;
+      s/✔/OK   :/g;
     ')
+    printf '%b\n' "$prefix$message";
+  else
+    printf '%b\n' "$prefix$message";
   fi
-  printf '%b\n' "$message";
 }
-die() { out "$@"; exit 1; } >&2
-err() { out " \033[1;31m✖\033[0m  $@"; } >&2
-success() { out " \033[1;32m✔\033[0m  $@"; }
-
-# Verbose logging
-log() { (($verbose)) && out "$@"; }
-
-# Notify on function success
-notify() { [[ $? == 0 ]] && success "$@" || err "$@"; }
-
-# Escape a string
-escape() { echo $@ | sed 's/\//\\\//g'; }
-
-# Unless force is used, confirm with user
-confirm() {
-  (($force)) && return 0;
-
-  read -p "$1 [y/N] " -n 1;
-  [[ $REPLY =~ ^[Yy]$ ]];
-}
-
-is_empty() {
-    local var=$1
-
-    [[ -z $var ]]
-}
-
-is_not_empty() {
-    local var=$1
-
-    [[ -n $var ]]
-}
-
-is_file() {
-    local file=$1
-
-    [[ -f $file ]]
-}
-
-is_dir() {
-    local dir=$1
-
-    [[ -d $dir ]]
-}
-
-# }}}
-# Script logic -- TOUCH THIS {{{
-
-version="v0.1"
-
-# A list of all variables to prompt in interactive mode. These variables HAVE
-# to be named exactly as the longname option definition in usage().
-interactive_opts=(username password)
-
-# Print usage
-usage() {
-  echo -n "$PROGNAME [OPTION]... [FILE]...
-
-Description of this script.
-
- Options:
-  -u, --username    Username for script
-  -p, --password    Input user password, it's recommended to insert
-                    this through the interactive option
-  -f, --force       Skip all user interaction
-  -i, --interactive Prompt for values
-  -q, --quiet       Quiet (no output)
-  -v, --verbose     Output more
-  -h, --help        Display this help and exit
-      --version     Output version information and exit
-"
-}
-
-# Set a trap for cleaning up in case of errors or when script exits.
-rollback() {
-  die
-}
-
-#################################################################################################
-# Put your script here
-main() {
-  echo -n
-}
-#################################################################################################
-
-# }}}
-# Boilerplate {{{
-
-# Prompt the user to interactively enter desired variable values. 
-prompt_options() {
-  local desc=
-  local val=
-  for val in ${interactive_opts[@]}; do
-
-    # Skip values which already are defined
-    [[ $(eval echo "\$$val") ]] && continue
-
-    # Parse the usage description for spefic option longname.
-    desc=$(usage | awk -v val=$val '
-      BEGIN {
-        # Separate rows at option definitions and begin line right before
-        # longname.
-        RS="\n +-([a-zA-Z0-9], )|-";
-        ORS=" ";
-      }
-      NR > 3 {
-        # Check if the option longname equals the value requested and passed
-        # into awk.
-        if ($1 == val) {
-          # Print all remaining fields, ie. the description.
-          for (i=2; i <= NF; i++) print $i
-        }
-      }
-    ')
-    [[ ! "$desc" ]] && continue
-
-    echo -n "$desc: "
-
-    # In case this is a password field, hide the user input
-    if [[ $val == "password" ]]; then
-      stty -echo; read password; stty echo
-      echo
-    # Otherwise just read the input
-    else
-      eval "read $val"
-    fi
-  done
-}
-
-# Iterate over options breaking -ab into -a -b when needed and --foo=bar into
-# --foo bar
-optstring=h
-unset options
-while (($#)); do
-  case $1 in
-    # If option is of type -ab
-    -[!-]?*)
-      # Loop over each character starting with the second
-      for ((i=1; i < ${#1}; i++)); do
-        c=${1:i:1}
-
-        # Add current char to options
-        options+=("-$c")
-
-        # If option takes a required argument, and it's not the last char make
-        # the rest of the string its argument
-        if [[ $optstring = *"$c:"* && ${1:i+1} ]]; then
-          options+=("${1:i+1}")
-          break
-        fi
-      done
-      ;;
-    # If option is of type --foo=bar
-    --?*=*) options+=("${1%%=*}" "${1#*=}") ;;
-    # add --endopts for --
-    --) options+=(--endopts) ;;
-    # Otherwise, nothing special
-    *) options+=("$1") ;;
-  esac
-  shift
-done
-set -- "${options[@]}"
-unset options
-
-# Set our rollback function for unexpected exits.
+rollback()  { die ; }
 trap rollback INT TERM EXIT
+safe_exit() { trap - INT TERM EXIT ; exit ; }
 
-# A non-destructive exit for when the script exits naturally.
-safe_exit() {
-  trap - INT TERM EXIT
-  exit
+die()     { out " \033[1;41m✖\033[0m: $@" >&2; safe_exit; }             # die with error message
+alert()   { out " \033[1;31m➨\033[0m  $@" >&2 ; }                       # print error and continue
+success() { out " \033[1;32m✔\033[0m  $@"; }
+log()     { [[ $verbose -gt 0 ]] && out "$@";}
+notify()  { [[ $? == 0 ]] && success "$@" || alert "$@"; }
+escape()  { echo $@ | sed 's/\//\\\//g'; }         # escape / as \/
+
+confirm() { (($force)) && return 0; read -p "$1 [y/N] " -n 1; echo " "; [[ $REPLY =~ ^[Yy]$ ]];}
+
+is_set()     { local target=$1 ; [[ $target -gt 0 ]] ; }
+is_empty()     { local target=$1 ; [[ -z $target ]] ; }
+is_not_empty() { local target=$1;  [[ -n $target ]] ; }
+
+is_file() { local target=$1; [[ -f $target ]] ; }
+is_dir()  { local target=$1; [[ -d $target ]] ; }
+
+
+usage() {
+echo "===== $PROGNAME $PROGVERS - $PROGDATE"
+echo -n "Usage: $PROGNAME"
+ list_options \
+| awk '
+BEGIN { FS="|"; OFS=" "; oneline="" ; fulltext="List of options:"}
+$1 ~ /flag/  {
+  fulltext = fulltext "\n    -"$2 "|--"$3  " : " $4 ;
+  if($5!=""){fulltext = fulltext "  [default: " $5 "]"; }
+  oneline  = oneline " [-" $2 "]"
+  }
+$1 ~ /option/  {
+  fulltext = fulltext "\n    -"$2 "|--"$3  " <" $3 "> : " $4 ;
+  if($5!=""){fulltext = fulltext "  [default: " $5 "]"; }
+  oneline  = oneline " [-" $2 " <" $3 ">]"
+  }
+$1 ~ /secret/  {
+  fulltext = fulltext "\n    -"$2 "|--"$3  " <" $3 "> : " $4 " (password)";
+    oneline  = oneline " [-" $2 " <" $3 ">]"
+  }
+$1 ~ /param/ {
+  if($2 == "1"){
+        fulltext = fulltext "\n    <" $3 ">  : " $4;
+        oneline  = oneline " <" $3 ">"
+   } else {
+        fulltext = fulltext "\n    <" $3 ">  : " $4 " (can be a list)";
+        oneline  = oneline " <" $3 "> [<...>]"
+   }
+  }
+  END {print oneline; print fulltext}
+'
 }
 
-# }}}
-# Main loop {{{
+init_options() {
+    init_command=$(list_options \
+    | awk '
+    BEGIN { FS="|"; OFS=" ";}
+    $1 ~ /flag/   && $5 == "" {print $3"=0; "}
+    $1 ~ /flag/   && $5 != "" {print $3"="$5"; "}
+    $1 ~ /option/ && $5 == "" {print $3"=\" \"; "}
+    $1 ~ /option/ && $5 != "" {print $3"="$5"; "}
+    ')
+    if [[ -n "$init_command" ]] ; then
+        #log "init_options: $(echo "$init_command" | wc -l) options/flags initialised"
+        eval "$init_command"
+   fi
+}
 
-# Print help if no arguments were passed.
-[[ $# -eq 0 ]] && set -- "--help"
+parse_options() {
+    if [[ $# -eq 0 ]] ; then
+       usage >&2 ; safe_exit
+    fi
 
-# Read the options and set stuff
-while [[ $1 = -?* ]]; do
-  case $1 in
-    -h|--help) usage >&2; safe_exit ;;
-    --version) out "$PROGNAME $version"; safe_exit ;;
-    -u|--username) shift; username=$1 ;;
-    -p|--password) shift; password=$1 ;;
-    -v|--verbose) verbose=1 ;;
-    -q|--quiet) quiet=1 ;;
-    -i|--interactive) interactive=1 ;;
-    -f|--force) force=1 ;;
-    --endopts) shift; break ;;
-    *) die "invalid option: $1" ;;
-  esac
-  shift
-done
+    ## first process all the -x --xxxx flags and options
+    while [[ $1 = -?* ]]; do
+        # flag <flag> is savec as $flag = 0/1
+        # option <option> is saved as $option
+       save_option=$(list_options \
+        | awk -v opt="$1" '
+        BEGIN { FS="|"; OFS=" ";}
+        $1 ~ /flag/   &&  "-"$2 == opt {print $3"=1"}
+        $1 ~ /flag/   && "--"$3 == opt {print $3"=1"}
+        $1 ~ /option/ &&  "-"$2 == opt {print $3"=$2; shift"}
+        $1 ~ /option/ && "--"$3 == opt {print $3"=$2; shift"}
+        ')
+        if [[ -n "$save_option" ]] ; then
+            #log "parse_options: $save_option"
+            eval $save_option
+        else
+            die "$PROGNAME cannot interpret option [$1]"
+        fi
+        shift
+    done
 
-# Store the remaining part as arguments.
-args+=("$@")
+    ## then run through the given parameters
+    single_params=$(list_options | grep 'param|1|' | cut -d'|' -f3)
+    nb_singles=$(echo $single_params | wc -w)
+    [[ $nb_singles -gt 0 ]] && [[ $# -eq 0 ]] && die "$PROGNAME needs the parameter(s) [$(echo $single_params)]"
 
-# }}}
-# Run it {{{
+    multi_param=$(list_options | grep 'param|n|' | cut -d'|' -f3)
+    nb_multis=$(echo $multi_param | wc -w)
+    if [[ $nb_multis -gt 1 ]] ; then
+        die "$PROGNAME cannot have more than 1 'multi' parameter: [$(echo $multi_param)]"
+    fi
 
-# Uncomment this line if the script requires root privileges.
-# [[ $UID -ne 0 ]] && die "You need to be root to run this script"
+    for param in $single_params ; do
+        if [[ -z $1 ]] ; then
+            die "$PROGNAME needs parameter [$param]"
+        fi
+        out "$param=$1"
+        eval $param="$1"
+        shift
+    done
 
-if ((interactive)); then
-  prompt_options
-fi
+    [[ $nb_multis -gt 0 ]] && [[ $# -eq 0 ]] && die "$PROGNAME needs the (multi) parameter [$multi_param]"
+    [[ $nb_multis -eq 0 ]] && [[ $# -gt 0 ]] && die "$PROGNAME cannot interpret extra parameters"
 
-# You should delegate your logic from the `main` function
+    # save the rest of the params in the multi param
+    eval "$multi_param=( $* )"
+}
+
+[[ $runasroot == 1  ]] && [[ $UID -ne 0 ]] && die "You MUST be root to run this script"
+[[ $runasroot == -1 ]] && [[ $UID -eq 0 ]] && die "You MAY NOT be root to run this script"
+
+################### DO NOT MODIFY ABOVE THIS LINE ###################
+#####################################################################
+
+## Put your script here
+main() {
+  success "this is flag verbose: [$verbose]"
+  success "this is option opt1: [$opt1]"
+  success "this is output: [$output]"
+  success "this is input: [${input[*]}]"
+  confirm "Shall we continue?"
+  notify "this was your answer"
+  success "everything is ok"
+}
+
+#####################################################################
+################### DO NOT MODIFY BELOW THIS LINE ###################
+
+init_options
+parse_options $@
 main
-
-# This has to be run last not to rollback changes we've made.
 safe_exit
-
-# }}}
