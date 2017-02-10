@@ -71,6 +71,17 @@ out() {
     printf '%b\n' "$prefix$message";
   fi
 }
+progress() {
+  ((quiet)) && return
+  local message="$@"
+  if ((piped)); then
+    printf '%b\n' "$message";
+    # \r makes no sense in file or pipe
+  else
+    printf '%b\r' "$message                                             ";
+    # next line will overwrite this line
+  fi
+}
 rollback()  { die ; }
 trap rollback INT TERM EXIT
 safe_exit() { trap - INT TERM EXIT ; exit ; }
