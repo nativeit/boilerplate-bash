@@ -24,13 +24,14 @@ echo -n '
 flag|h|help|show usage
 flag|q|quiet|no output
 flag|v|verbose|output more
-option|a|opt1|option 1|10
-option|b|opt2|option 2|fast
-param|1|output|output file
-param|n|input|input file(s)
+flag|f|force|do not ask for confirmation
+option|s|speed|choose speed fast or slow|slow
+param|1|action|action to perform: LIST/...
+param|n|file|file(s) to perform on
 '
 }
 
+# change program version to your own release logic
 readonly PROGVERS="v0.2"
 #####################################################################
 ################### DO NOT MODIFY BELOW THIS LINE ###################
@@ -212,13 +213,13 @@ parse_options() {
 
 ## Put your script here
 main() {
-  success "this is flag verbose: [$verbose]"
-  success "this is option opt1: [$opt1]"
-  success "this is output: [$output]"
-  success "this is input: [${input[*]}]"
-  confirm "Shall we continue?"
-  notify "this was your answer"
-  success "everything is ok"
+  case $action in
+    LIST|list )
+      ls -rtl ${file[*]}
+      ;;
+    *)
+      die "Action [$action] not recognized" 
+  esac
 }
 
 #####################################################################
