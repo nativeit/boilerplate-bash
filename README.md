@@ -14,16 +14,18 @@
 ## Example usage
 
 ```
-===== script.sh v0.2 - Feb 11 22:43:34 2017
-Usage: script.sh [-h] [-q] [-v] [-f] [-s <speed>] <action> <file> [<...>]
-List of options:
-    -h|--help : show usage
-    -q|--quiet : no output
-    -v|--verbose : output more
-    -f|--force : do not ask for confirmation
-    -s|--speed <speed> : choose speed fast or slow  [default: slow]
-    <action>  : action to perform: LIST/...
-    <file>  : file(s) to perform on (can be a list)
+### Program: script.sh by peter@forret.com
+### Version: v1.0 - Feb 12 18:01:12 2017
+### Usage: script.sh [-h] [-q] [-v] [-f] [-u <user>] [-p <pass>] <action> <file> [<...>]
+### Flags, options and parameters:
+    -h|--help      : [flag] show usage [default: off]
+    -q|--quiet     : [flag] no output [default: off]
+    -v|--verbose   : [flag] output more [default: off]
+    -f|--force     : [flag] do not ask for confirmation [default: off]
+    -u|--user <val>: [optn] username to use  [default: pforret]
+    -p|--pass <val>: [secr] password to use
+    <action>  : [parameter] action to perform: LIST/...
+    <file>    : [parameter] file(s) to perform on (1 or more)
 ```
 
 ## Functions
