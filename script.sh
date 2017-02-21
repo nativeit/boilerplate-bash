@@ -20,18 +20,21 @@ runasroot=0
 #param|<type>|<long>|<description>
 # where <type> = 1 for single parameters or <type> = n for (last) parameter that can be a list
 list_options() {
-echo -n '
+echo -n "
 flag|h|help|show usage
 flag|q|quiet|no output
 flag|v|verbose|output more
-option|a|opt1|option 1|10
-option|b|opt2|option 2|fast
-param|1|output|output file
-param|n|input|input file(s)
-'
+flag|f|force|do not ask for confirmation
+option|u|user|username to use|$USER
+secret|p|pass|password to use
+param|1|action|action to perform: LIST/...
+param|n|file|file(s) to perform on
+"
 }
 
-readonly PROGVERS="v0.2"
+# change program version to your own release logic
+readonly PROGVERS="v1.0"
+readonly PROGAUTH="peter@forret.com"
 #####################################################################
 ################### DO NOT MODIFY BELOW THIS LINE ###################
 
@@ -71,6 +74,17 @@ out() {
     printf '%b\n' "$prefix$message";
   fi
 }
+progress() {
+  ((quiet)) && return
+  local message="$@"
+  if ((piped)); then
+    printf '%b\n' "$message";
+    # \r makes no sense in file or pipe
+  else
+    printf '%b\r' "$message                                             ";
+    # next line will overwrite this line
+  fi
+}
 rollback()  { die ; }
 trap rollback INT TERM EXIT
 safe_exit() { trap - INT TERM EXIT ; exit ; }
@@ -93,31 +107,31 @@ is_dir()  { local target=$1; [[ -d $target ]] ; }
 
 
 usage() {
-echo "===== $PROGNAME $PROGVERS - $PROGDATE"
-echo -n "Usage: $PROGNAME"
+out "### Program: \033[1;32m$PROGNAME\033[0m by $PROGAUTH"
+out "### Version: $PROGVERS - $PROGDATE"
+echo -n "### Usage: $PROGNAME"
  list_options \
 | awk '
-BEGIN { FS="|"; OFS=" "; oneline="" ; fulltext="List of options:"}
+BEGIN { FS="|"; OFS=" "; oneline="" ; fulltext="### Flags, options and parameters:"}
 $1 ~ /flag/  {
-  fulltext = fulltext "\n    -"$2 "|--"$3  " : " $4 ;
-  if($5!=""){fulltext = fulltext "  [default: " $5 "]"; }
+  fulltext = fulltext sprintf("\n    -%1s|--%-10s: [flag] %s [default: off]",$2,$3,$4) ;
   oneline  = oneline " [-" $2 "]"
   }
 $1 ~ /option/  {
-  fulltext = fulltext "\n    -"$2 "|--"$3  " <" $3 "> : " $4 ;
+  fulltext = fulltext sprintf("\n    -%1s|--%s <%s>: [optn] %s",$2,$3,"val",$4) ;
   if($5!=""){fulltext = fulltext "  [default: " $5 "]"; }
   oneline  = oneline " [-" $2 " <" $3 ">]"
   }
 $1 ~ /secret/  {
-  fulltext = fulltext "\n    -"$2 "|--"$3  " <" $3 "> : " $4 " (password)";
+  fulltext = fulltext sprintf("\n    -%1s|--%s <%s>: [secr] %s",$2,$3,"val",$4) ;
     oneline  = oneline " [-" $2 " <" $3 ">]"
   }
 $1 ~ /param/ {
   if($2 == "1"){
-        fulltext = fulltext "\n    <" $3 ">  : " $4;
+        fulltext = fulltext sprintf("\n    %-10s: [parameter] %s","<"$3">",$4);
         oneline  = oneline " <" $3 ">"
    } else {
-        fulltext = fulltext "\n    <" $3 ">  : " $4 " (can be a list)";
+        fulltext = fulltext sprintf("\n    %-10s: [parameter] %s (1 or more)","<"$3">",$4);
         oneline  = oneline " <" $3 "> [<...>]"
    }
   }
@@ -201,13 +215,13 @@ parse_options() {
 
 ## Put your script here
 main() {
-  success "this is flag verbose: [$verbose]"
-  success "this is option opt1: [$opt1]"
-  success "this is output: [$output]"
-  success "this is input: [${input[*]}]"
-  confirm "Shall we continue?"
-  notify "this was your answer"
-  success "everything is ok"
+  case $action in
+    LIST|list )
+      ls -rtl ${file[*]}
+      ;;
+    *)
+      die "Action [$action] not recognized" 
+  esac
 }
 
 #####################################################################
