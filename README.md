@@ -14,15 +14,17 @@
 ## Example usage
 
 ```
-### Program: script.sh by peter@forret.com
-### Version: v1.0 - Feb 12 18:01:12 2017
-### Usage: script.sh [-h] [-q] [-v] [-f] [-u <user>] [-p <pass>] <action> <file> [<...>]
+### Program: script by peter@forret.com
+### Version: v1.0 - 2018-02-20 11:22
+### Usage: script [-h] [-q] [-v] [-f] [-l <logdir>] [-t <tmpdir>] [-u <user>] [-p <pass>] <action> <file> [<...>]
 ### Flags, options and parameters:
     -h|--help      : [flag] show usage [default: off]
     -q|--quiet     : [flag] no output [default: off]
     -v|--verbose   : [flag] output more [default: off]
     -f|--force     : [flag] do not ask for confirmation [default: off]
-    -u|--user <val>: [optn] username to use  [default: pforret]
+    -l|--logdir <val>: [optn] folder for log files   [default: ./log]
+    -t|--tmpdir <val>: [optn] folder for temp files  [default: /tmp/script]
+    -u|--user <val>: [optn] username to use  [default: admin]
     -p|--pass <val>: [secr] password to use
     <action>  : [parameter] action to perform: LIST/...
     <file>    : [parameter] file(s) to perform on (1 or more)
