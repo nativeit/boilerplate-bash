@@ -13,8 +13,15 @@ runasroot=0
 ### flag:   switch a flag 'on' / no extra parameter / e.g. "-v" for verbose
 # flag|<short>|<long>|<description>|<default>
 
+# change program version to your own release logic
+readonly PROGNAME=$(basename $0 .sh)
+readonly PROGDIR=$(cd $(dirname $0); pwd)
+readonly PROGVERS="v1.0"
+readonly PROGAUTH="peter@forret.com"
+
 ### option: set an option value / 1 extra parameter / e.g. "-l error.log" for logging to file
 # option|<short>|<long>|<description>|<default>
+[[ -z "$TEMP" ]] && TEMP=/tmp
 
 ### param:  comes after the options
 #param|<type>|<long>|<description>
@@ -25,6 +32,8 @@ flag|h|help|show usage
 flag|q|quiet|no output
 flag|v|verbose|output more
 flag|f|force|do not ask for confirmation
+option|l|logdir|folder for log files |$PROGDIR/log
+option|t|tmpdir|folder for temp files|$TEMP/$PROGNAME
 option|u|user|username to use|$USER
 secret|p|pass|password to use
 param|1|action|action to perform: LIST/...
@@ -32,17 +41,12 @@ param|n|file|file(s) to perform on
 "
 }
 
-# change program version to your own release logic
-readonly PROGVERS="v1.0"
-readonly PROGAUTH="peter@forret.com"
 #####################################################################
 ################### DO NOT MODIFY BELOW THIS LINE ###################
 
-readonly PROGNAME=$(basename $0)
-readonly PROGDIR=$(cd $(dirname $0); pwd)
-PROGDATE=$(stat -c %y "$PROGDIR/$PROGNAME" 2>/dev/null | cut -c1-16) # generic linux
+PROGDATE=$(stat -c %y "$0" 2>/dev/null | cut -c1-16) # generic linux
 if [[ -z $PROGDATE ]] ; then
-  PROGDATE=$(stat -f "%Sm" "$PROGDIR/$PROGNAME" 2>/dev/null) # for MacOS
+  PROGDATE=$(stat -f "%Sm" "$0" 2>/dev/null) # for MacOS
 fi
 
 readonly ARGS="$@"
@@ -92,7 +96,7 @@ safe_exit() { trap - INT TERM EXIT ; exit ; }
 die()     { out " \033[1;41m✖\033[0m: $@" >&2; safe_exit; }             # die with error message
 alert()   { out " \033[1;31m➨\033[0m  $@" >&2 ; }                       # print error and continue
 success() { out " \033[1;32m✔\033[0m  $@"; }
-log()     { [[ $verbose -gt 0 ]] && out "$@";}
+log()     { [[ $verbose -gt 0 ]] && out "\033[1;33m# $@\033[0m";}
 notify()  { [[ $? == 0 ]] && success "$@" || alert "$@"; }
 escape()  { echo $@ | sed 's/\//\\\//g'; }         # escape / as \/
 
@@ -204,7 +208,9 @@ parse_options() {
     [[ $nb_multis -eq 0 ]] && [[ $# -gt 0 ]] && die "$PROGNAME cannot interpret extra parameters"
 
     # save the rest of the params in the multi param
-    eval "$multi_param=( $* )"
+	if [ -s "$*" ] ; then
+		eval "$multi_param=( $* )"
+	fi
 }
 
 [[ $runasroot == 1  ]] && [[ $UID -ne 0 ]] && die "You MUST be root to run this script"
@@ -215,8 +221,28 @@ parse_options() {
 
 ## Put your script here
 main() {
-  case $action in
-    LIST|list )
+	if [[ -s "$tmpdir" ]] ; then
+		if [ ! -d "$tmpdir" ] ; then
+			log "Create tmp folder [$tmpdir]"
+			mkdir "$tmpdir"
+		else
+			log "cleanup tmp folder [$tmpdir]"
+			find "$tmpdir" -mtime +1 -exec rm {} \;
+		fi
+	fi
+	if [[ -s "$logdir" ]] ; then
+		if [ ! -d "$logdir" ] ; then
+			log "Create log folder [$logdir]"
+			mkdir "$logdir"
+		else
+			log "cleanup log folder [$logdir]"
+			find "$logdir" -mtime +7 -exec rm {} \;
+		fi
+	fi
+	
+
+  case ${action^^} in
+    LIST )
       ls -rtl ${file[*]}
       ;;
     *)
