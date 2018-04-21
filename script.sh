@@ -54,6 +54,7 @@ readonly ARGS="$@"
 verbose=0
 quiet=0
 piped=0
+force=0
 [[ -t 1 ]] && piped=0 || piped=1        # detect if out put is piped
 
 # Defaults
@@ -78,6 +79,7 @@ out() {
     printf '%b\n' "$prefix$message";
   fi
 }
+
 progress() {
   ((quiet)) && return
   local message="$@"
@@ -98,7 +100,10 @@ alert()   { out " \033[1;31m➨\033[0m  $@" >&2 ; }                       # prin
 success() { out " \033[1;32m✔\033[0m  $@"; }
 log()     { [[ $verbose -gt 0 ]] && out "\033[1;33m# $@\033[0m";}
 notify()  { [[ $? == 0 ]] && success "$@" || alert "$@"; }
-escape()  { echo $@ | sed 's/\//\\\//g'; }         # escape / as \/
+escape()  { echo $@ | sed 's/\//\\\//g' ; }
+
+lcase()   { echo $@ | awk '{print tolower($0)}' ; }
+ucase()   { echo $@ | awk '{print toupper($0)}' ; }
 
 confirm() { (($force)) && return 0; read -p "$1 [y/N] " -n 1; echo " "; [[ $REPLY =~ ^[Yy]$ ]];}
 
@@ -208,7 +213,7 @@ parse_options() {
     [[ $nb_multis -eq 0 ]] && [[ $# -gt 0 ]] && die "$PROGNAME cannot interpret extra parameters"
 
     # save the rest of the params in the multi param
-	if [ -s "$*" ] ; then
+	if [[ -s "$*" ]] ; then
 		eval "$multi_param=( $* )"
 	fi
 }
@@ -219,35 +224,40 @@ parse_options() {
 ################### DO NOT MODIFY ABOVE THIS LINE ###################
 #####################################################################
 
-## Put your script here
-main() {
-	if [[ -s "$tmpdir" ]] ; then
-		if [ ! -d "$tmpdir" ] ; then
-			log "Create tmp folder [$tmpdir]"
-			mkdir "$tmpdir"
-		else
-			log "cleanup tmp folder [$tmpdir]"
-			find "$tmpdir" -mtime +1 -exec rm {} \;
-		fi
+## Put your helper scripts here
+folder_prep(){
+    if [[ -s "$1" ]] ; then
+        folder="$1"
+        maxdays=365
+        if [[ -s "$2" ]] ; then
+            maxdays=$2
+        fi
+        if [[ -s "$folder" ]] ; then
+            if [ ! -d "$folder" ] ; then
+                log "Create folder [$folder]"
+                mkdir "$folder"
+            else
+                log "cleanup folder [$folder] - delete older than $maxdays days"
+                find "$folder" -mtime +$maxdays -exec rm {} \;
+            fi
+        fi
 	fi
-	if [[ -s "$logdir" ]] ; then
-		if [ ! -d "$logdir" ] ; then
-			log "Create log folder [$logdir]"
-			mkdir "$logdir"
-		else
-			log "cleanup log folder [$logdir]"
-			find "$logdir" -mtime +7 -exec rm {} \;
-		fi
-	fi
-	
+}
 
-  case ${action^^} in
+
+## Put your main script here
+main() {
+    folder_prep "$tmpdir" 1
+    folder_prep "$logdir" 7
+
+    action=$(ucase $action)
+    case $action in
     LIST )
-      ls -rtl ${file[*]}
-      ;;
+        ls -rtl ${file[*]}
+        ;;
     *)
-      die "Action [$action] not recognized" 
-  esac
+        die "Action [$action] not recognized"
+    esac
 }
 
 #####################################################################
