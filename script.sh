@@ -3,6 +3,7 @@
 prefix_fmt=""
 # uncomment next line to have date/time prefix for every output line
 #prefix_fmt='+%Y-%m-%d %H:%M:%S :: '
+#prefix_fmt='+%H:%M:%S :: '
 
 runasroot=0
 # runasroot = 0 :: don't check anything
@@ -62,6 +63,11 @@ force=0
 # Defaults
 args=()
 
+col_green="\033[1;32m"
+col_red="\033[1;31m"
+col_yellow="\033[1;33m"
+col_reset="\033[0m"
+
 out() {
   ((quiet)) && return
   local message="$@"
@@ -97,10 +103,10 @@ rollback()  { die ; }
 trap rollback INT TERM EXIT
 safe_exit() { trap - INT TERM EXIT ; exit ; }
 
-die()     { out " \033[1;41m✖\033[0m: $@" >&2; safe_exit; }             # die with error message
-alert()   { out " \033[1;31m➨\033[0m  $@" >&2 ; }                       # print error and continue
-success() { out " \033[1;32m✔\033[0m  $@"; }
-log()     { [[ $verbose -gt 0 ]] && out "\033[1;33m# $@\033[0m";}
+die()     { out " ${col_red}✖${col_reset}: $@" >&2; safe_exit; }             # die with error message
+alert()   { out " ${col_red}➨${col_reset}:  $@" >&2 ; }                       # print error and continue
+success() { out " ${col_green}✔${col_reset}  $@"; }
+log()     { [[ $verbose -gt 0 ]] && out "${col_yellow}# $@${col_reset}";}
 notify()  { [[ $? == 0 ]] && success "$@" || alert "$@"; }
 escape()  { echo $@ | sed 's/\//\\\//g' ; }
 
@@ -127,7 +133,7 @@ on_32bit()	{ [[ "$os_bits"  = "i386" ]] ;	}
 on_64bit()	{ [[ "$os_bits"  = "x86_64" ]] ;	}
 
 usage() {
-out "Program: \033[1;32m$PROGNAME\033[0m by $PROGAUTH"
+out "Program: ${col_green}$PROGNAME${col_reset} by ${col_yellow}$PROGAUTH${col_reset}"
 out "Version: $PROGVERS - $PROGDATE"
 echo -n "Usage: $PROGNAME"
  list_options \
