@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # first set some execution parameters
 prefix_fmt=""
 # uncomment next line to have date/time prefix for every output line
@@ -33,12 +33,12 @@ flag|q|quiet|no output
 flag|v|verbose|output more
 flag|f|force|do not ask for confirmation
 option|l|logdir|folder for log files |$PROGDIR/log
-option|t|tmpdir|folder for temp files|$TEMP/$PROGNAME
-option|u|user|username to use|$USER
-secret|p|pass|password to use
+#option|t|tmpdir|folder for temp files|$TEMP/$PROGNAME
+#option|u|user|username to use|$USER
+#secret|p|pass|password to use
 param|1|action|action to perform: LIST/...
-param|n|file|file(s) to perform on
-"
+param|n|files|file(s) to perform on
+" | grep -v '^#'
 }
 
 #####################################################################
@@ -119,19 +119,19 @@ os_uname=$(uname -s)
 os_bits=$(uname -m)
 os_version=$(uname -v)
 
-on_mac()	{ [[ "$os_uname" == "Darwin" ]] ;	}
-on_linux()	{ [[ "$os_uname" == "Linux" ]] ;	}
+on_mac()	{ [[ "$os_uname" = "Darwin" ]] ;	}
+on_linux()	{ [[ "$os_uname" = "Linux" ]] ;	}
 on_ubuntu()	{ [[ -n $(echo $os_version | grep Ubuntu) ]] ;	}
-on_32bit()	{ [[ "$os_bits"  == "i386" ]] ;	}
-on_64bit()	{ [[ "$os_bits"  == "x86_64" ]] ;	}
+on_32bit()	{ [[ "$os_bits"  = "i386" ]] ;	}
+on_64bit()	{ [[ "$os_bits"  = "x86_64" ]] ;	}
 
 usage() {
-out "### Program: \033[1;32m$PROGNAME\033[0m by $PROGAUTH"
-out "### Version: $PROGVERS - $PROGDATE"
-echo -n "### Usage: $PROGNAME"
+out "Program: \033[1;32m$PROGNAME\033[0m by $PROGAUTH"
+out "Version: $PROGVERS - $PROGDATE"
+echo -n "Usage: $PROGNAME"
  list_options \
 | awk '
-BEGIN { FS="|"; OFS=" "; oneline="" ; fulltext="### Flags, options and parameters:"}
+BEGIN { FS="|"; OFS=" "; oneline="" ; fulltext="Flags, options and parameters:"}
 $1 ~ /flag/  {
   fulltext = fulltext sprintf("\n    -%1s|--%-10s: [flag] %s [default: off]",$2,$3,$4) ;
   oneline  = oneline " [-" $2 "]"
@@ -150,7 +150,7 @@ $1 ~ /param/ {
         fulltext = fulltext sprintf("\n    %-10s: [parameter] %s","<"$3">",$4);
         oneline  = oneline " <" $3 ">"
    } else {
-        fulltext = fulltext sprintf("\n    %-10s: [parameter] %s (1 or more)","<"$3">",$4);
+        fulltext = fulltext sprintf("\n    %-10s: [parameters] %s (1 or more)","<"$3">",$4);
         oneline  = oneline " <" $3 "> [<...>]"
    }
   }
@@ -159,7 +159,7 @@ $1 ~ /param/ {
 }
 
 init_options() {
-    init_command=$(list_options \
+    local init_command=$(list_options \
     | awk '
     BEGIN { FS="|"; OFS=" ";}
     $1 ~ /flag/   && $5 == "" {print $3"=0; "}
@@ -174,6 +174,7 @@ init_options() {
 }
 
 verify_programs(){
+	log "Running on $(/usr/bin/env bash --version | head -1)"
 	log "Checking programs [$*]"
 	for prog in $* ; do
 		if [[ -z $(which "$prog") ]] ; then
@@ -184,8 +185,8 @@ verify_programs(){
 
 folder_prep(){
     if [[ -n "$1" ]] ; then
-        folder="$1"
-        maxdays=365
+        local folder="$1"
+        local maxdays=365
         if [[ -n "$2" ]] ; then
             maxdays=$2
         fi
@@ -208,7 +209,7 @@ parse_options() {
     while [[ $1 = -?* ]]; do
         # flag <flag> is savec as $flag = 0/1
         # option <option> is saved as $option
-       save_option=$(list_options \
+       local save_option=$(list_options \
         | awk -v opt="$1" '
         BEGIN { FS="|"; OFS=" ";}
         $1 ~ /flag/   &&  "-"$2 == opt {print $3"=1"}
@@ -267,9 +268,9 @@ do_that_thing(){
 }
 
 do_the_other_thing(){
-	param1="$1"
+	local param1="$1"
 	[[ -z "$param1" ]] && return 1
-	param2=0
+	local param2=0
 	[[ -n "$2" ]] && param2="$2"
 	echo "$1:$2"
 	# use as 'value=$(do_the_other_thing)'
@@ -278,9 +279,10 @@ do_the_other_thing(){
 
 ## Put your main script here
 main() {
+	log "Start of $PROGNAME $PROGVERS ($PROGDATE)"
     [[ -n "$tmpdir" ]] && folder_prep "$tmpdir" 1
     [[ -n "$logdir" ]] && folder_prep "$logdir" 7
-    verify_programs awk curl cut date echo find grep ifconfig netstat printf sed stat uname 
+    verify_programs awk curl cut date echo find grep head ifconfig netstat printf sed stat tail uname 
 
     action=$(ucase $action)
     case $action in
@@ -299,5 +301,7 @@ main() {
 
 init_options
 parse_options $@
+log "---- START MAIN"
 main
+log "---- FINISH MAIN"
 safe_exit
