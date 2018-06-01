@@ -55,6 +55,7 @@ verbose=0
 quiet=0
 piped=0
 force=0
+
 [[ -t 1 ]] && piped=0 || piped=1        # detect if out put is piped
 
 # Defaults
@@ -114,6 +115,15 @@ is_not_empty() { local target=$1;  [[ -n $target ]] ; }
 is_file() { local target=$1; [[ -f $target ]] ; }
 is_dir()  { local target=$1; [[ -d $target ]] ; }
 
+os_uname=$(uname -s)
+os_bits=$(uname -m)
+os_version=$(uname -v)
+
+on_mac()	{ [[ "$os_uname" == "Darwin" ]] ;	}
+on_linux()	{ [[ "$os_uname" == "Linux" ]] ;	}
+on_ubuntu()	{ [[ -n $(echo $os_version | grep Ubuntu) ]] ;	}
+on_32bit()	{ [[ "$os_bits"  == "i386" ]] ;	}
+on_64bit()	{ [[ "$os_bits"  == "x86_64" ]] ;	}
 
 usage() {
 out "### Program: \033[1;32m$PROGNAME\033[0m by $PROGAUTH"
@@ -163,6 +173,32 @@ init_options() {
    fi
 }
 
+verify_programs(){
+	log "Checking programs [$*]"
+	for prog in $* ; do
+		if [[ -z $(which "$prog") ]] ; then
+			alert "Script needs [$prog] but this program cannot be found on this $os_uname machine"
+		fi
+	done
+}
+
+folder_prep(){
+    if [[ -n "$1" ]] ; then
+        folder="$1"
+        maxdays=365
+        if [[ -n "$2" ]] ; then
+            maxdays=$2
+        fi
+        if [ ! -d "$folder" ] ; then
+            log "Create folder [$folder]"
+            mkdir "$folder"
+        else
+            log "Cleanup folder [$folder] - delete older than $maxdays day(s)"
+            find "$folder" -mtime +$maxdays -exec rm {} \;
+        fi
+	fi
+}
+
 parse_options() {
     if [[ $# -eq 0 ]] ; then
        usage >&2 ; safe_exit
@@ -204,7 +240,7 @@ parse_options() {
         if [[ -z $1 ]] ; then
             die "$PROGNAME needs parameter [$param]"
         fi
-        out "$param=$1"
+        log "$param=$1"
         eval $param="$1"
         shift
     done
@@ -225,35 +261,33 @@ parse_options() {
 #####################################################################
 
 ## Put your helper scripts here
-folder_prep(){
-    if [[ -s "$1" ]] ; then
-        folder="$1"
-        maxdays=365
-        if [[ -s "$2" ]] ; then
-            maxdays=$2
-        fi
-        if [[ -s "$folder" ]] ; then
-            if [ ! -d "$folder" ] ; then
-                log "Create folder [$folder]"
-                mkdir "$folder"
-            else
-                log "cleanup folder [$folder] - delete older than $maxdays days"
-                find "$folder" -mtime +$maxdays -exec rm {} \;
-            fi
-        fi
-	fi
+do_that_thing(){
+	return 0
+	# use as 'do_that_thing && follow up with this'
+}
+
+do_the_other_thing(){
+	param1="$1"
+	[[ -z "$param1" ]] && return 1
+	param2=0
+	[[ -n "$2" ]] && param2="$2"
+	echo "$1:$2"
+	# use as 'value=$(do_the_other_thing)'
 }
 
 
 ## Put your main script here
 main() {
-    folder_prep "$tmpdir" 1
-    folder_prep "$logdir" 7
+    [[ -n "$tmpdir" ]] && folder_prep "$tmpdir" 1
+    [[ -n "$logdir" ]] && folder_prep "$logdir" 7
+    verify_programs awk curl cut date echo find grep ifconfig netstat printf sed stat uname 
 
     action=$(ucase $action)
     case $action in
     LIST )
-        ls -rtl ${file[*]}
+        on_mac && log "Running on MacOS"
+        on_linux && log "Running on Linux"
+        do_that_thing && do_the_other_thing "this is the output" "for you" 
         ;;
     *)
         die "Action [$action] not recognized"
