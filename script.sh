@@ -9,23 +9,24 @@ runasroot=0
 # runasroot = 1 :: script MUST run as root
 # runasroot = -1 :: script MAY NOT run as root
 
-### Change the next lines to reflect which flags/options/parameters you need
-### flag:   switch a flag 'on' / no extra parameter / e.g. "-v" for verbose
-# flag|<short>|<long>|<description>|<default>
-
 # change program version to your own release logic
 readonly PROGNAME=$(basename $0 .sh)
 readonly PROGDIR=$(cd $(dirname $0); pwd)
 readonly PROGVERS="v1.0"
 readonly PROGAUTH="peter@forret.com"
+[[ -z "$TEMP" ]] && TEMP=/tmp
+
+### Change the next lines to reflect which flags/options/parameters you need
+### flag:   switch a flag 'on' / no extra parameter / e.g. "-v" for verbose
+# flag|<short>|<long>|<description>|<default>
 
 ### option: set an option value / 1 extra parameter / e.g. "-l error.log" for logging to file
 # option|<short>|<long>|<description>|<default>
-[[ -z "$TEMP" ]] && TEMP=/tmp
 
 ### param:  comes after the options
 #param|<type>|<long>|<description>
 # where <type> = 1 for single parameters or <type> = n for (last) parameter that can be a list
+
 list_options() {
 echo -n "
 flag|h|help|show usage
