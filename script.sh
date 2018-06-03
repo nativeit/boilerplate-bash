@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# first set some execution parameters
+
 prefix_fmt=""
 # uncomment next line to have date/time prefix for every output line
 #prefix_fmt='+%Y-%m-%d %H:%M:%S :: '
-#prefix_fmt='+%H:%M:%S :: '
 
 runasroot=0
 # runasroot = 0 :: don't check anything
@@ -19,14 +18,12 @@ readonly PROGAUTH="peter@forret.com"
 
 ### Change the next lines to reflect which flags/options/parameters you need
 ### flag:   switch a flag 'on' / no extra parameter / e.g. "-v" for verbose
-# flag|<short>|<long>|<description>|<default>
-
+### flag|<short>|<long>|<description>|<default>
 ### option: set an option value / 1 extra parameter / e.g. "-l error.log" for logging to file
-# option|<short>|<long>|<description>|<default>
-
+### option|<short>|<long>|<description>|<default>
 ### param:  comes after the options
-#param|<type>|<long>|<description>
-# where <type> = 1 for single parameters or <type> = n for (last) parameter that can be a list
+### param|<type>|<long>|<description>
+### where <type> = 1 for single parameters or <type> = n for (last) parameter that can be a list
 
 list_options() {
 echo -n "
