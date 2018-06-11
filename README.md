@@ -2,15 +2,27 @@
 
 ## Features
 
-* specify your variables only once
-	* flags: (optional) -f|-- force - will end up in $force
-	* option: (optional) -k|--key [value] - will end up in $key
-	* parameters: (obligatory)
-* auto-generate -h|--help usage message
-* Quiet/verbose mode
-* Confirmation or forced mode
-* Works with color output (green = good/red = bad) when possible.
-
+* all in 1 file
+* strict mode
+* specify your optional/required arguments **only once** in easy-to-read format
+	* flags: (optional) -f|-- force - will end up in variable $force
+	* option: (optional) -k|--key [value] - will end up in variable $key
+	* parameters: (obligatory) single params and/or multi-param (e.g. 'process_files file1 file2 file3')
+* auto-generated -h|--help|(no parameters) usage message
+* quiet (-q) mode: only see errors, e.g. for crontab use (don't show 'log' or 'out' output)
+* verbose (-v) mode: see more information, for debugging (also show 'log' output) 
+* colored output (green = good/red = bad/yellow = debugging) when possible.
+* built-in command for normal output 'out', skipped when using option -q --quiet
+* built-in command for same-line output 'progress', skipped when using option -q --quiet
+* built-in command for debugging output 'log', skipped when not using option -v --verbose
+* built-in command for warning output 'alert', skipped when using option -q --quiet'
+* built-in command for success output 'success', skipped when using option -q --quiet'
+* built-in command for graceful exit 'die'
+* built-in command for requesting Y/N 'confirm', skipped when using option -f --force
+* built-in commands for upper/lowercase conversion 'ucase', 'lcase'
+* built-in command for checking all the programs needed for script execution 'verify_programs'
+* built-in command for cleanup/initialising folders 'folder_prep'
+* built-in platform/os detection: 'on_mac', 'on_linux'
 ## Example usage
 
 ```

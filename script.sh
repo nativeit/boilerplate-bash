@@ -9,12 +9,16 @@ runasroot=0
 # runasroot = 1 :: script MUST run as root
 # runasroot = -1 :: script MAY NOT run as root
 
+# set strict mode -  via http://redsymbol.net/articles/unofficial-bash-strict-mode/
+set -euo pipefail
+IFS=$'\n\t'
+
 # change program version to your own release logic
 readonly PROGNAME=$(basename $0 .sh)
 readonly PROGDIR=$(cd $(dirname $0); pwd)
 readonly PROGVERS="v1.0"
 readonly PROGAUTH="peter@forret.com"
-[[ -z "$TEMP" ]] && TEMP=/tmp
+[[ -z "${TEMP:-}" ]] && TEMP=/tmp
 
 ### Change the next lines to reflect which flags/options/parameters you need
 ### flag:   switch a flag 'on' / no extra parameter / e.g. "-v" for verbose
@@ -305,7 +309,7 @@ main() {
 
 init_options
 parse_options $@
-log "---- START MAIN"
+log "---- START MAIN" # this will show up even if your main() has errors
 main
-log "---- FINISH MAIN"
+log "---- FINISH MAIN" # a start needs a finish
 safe_exit
