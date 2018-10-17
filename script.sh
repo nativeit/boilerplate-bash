@@ -108,8 +108,7 @@ progress() {
     # next line will overwrite this line
   fi
 }
-rollback()  { die "$PROGNAME stopped unexpectedly" ; }
-trap rollback INT TERM EXIT
+trap "die \"$PROGNAME stopped because [\$BASH_COMMAND] fails !\" ; " INT TERM EXIT
 safe_exit() { trap - INT TERM EXIT ; exit ; }
 
 die()       { out " ${col_red}✖${col_reset}: $@" >&2; safe_exit; }             # die with error message
