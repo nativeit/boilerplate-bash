@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
+# uncomment next line to have time prefix for every output line
+#prefix_fmt='+%H:%M:%S | '
 prefix_fmt=""
-# uncomment next line to have date/time prefix for every output line
-#prefix_fmt='+%Y-%m-%d %H:%M:%S :: '
 
-runasroot=0
+runasroot=-1
 # runasroot = 0 :: don't check anything
 # runasroot = 1 :: script MUST run as root
 # runasroot = -1 :: script MAY NOT run as root
@@ -18,6 +18,7 @@ readonly PROGNAME=$(basename $0 .sh)
 readonly PROGDIR=$(cd $(dirname $0); pwd)
 readonly PROGVERS="v1.0"
 readonly PROGAUTH="peter@forret.com"
+readonly USERNAME=$(whoami)
 [[ -z "${TEMP:-}" ]] && TEMP=/tmp
 
 ### Change the next lines to reflect which flags/options/parameters you need
@@ -35,11 +36,12 @@ flag|h|help|show usage
 flag|q|quiet|no output
 flag|v|verbose|output more
 flag|f|force|do not ask for confirmation
-option|l|logdir|folder for log files |$PROGDIR/log
-#option|t|tmpdir|folder for temp files|$TEMP/$PROGNAME
+option|l|logdir|folder for log files |./log
+option|t|tmpdir|folder for temp files|$TEMP/$PROGNAME
 #option|u|user|username to use|$USER
 #secret|p|pass|password to use
 param|1|action|action to perform: LIST/...
+# there can only be 1 param|n and it should be the last
 param|n|files|file(s) to perform on
 " | grep -v '^#'
 }
@@ -60,14 +62,19 @@ piped=0
 force=0
 
 [[ -t 1 ]] && piped=0 || piped=1        # detect if out put is piped
+[[ $(echo -e '\xe2\x82\xac') == '€' ]] && unicode=1 || unicode=0 # detect if unicode is supported
 
 # Defaults
 args=()
 
-col_reset="\033[0m"
-col_red="\033[1;31m"
-col_grn="\033[1;32m"
-col_ylw="\033[1;33m"
+readonly col_reset="\033[0m"
+readonly col_red="\033[1;31m"
+readonly col_grn="\033[1;32m"
+readonly col_ylw="\033[1;33m"
+
+readonly nbcols=$(tput cols)
+readonly wprogress=$(expr $nbcols - 5)
+readonly nbrows=$(tput lines)
 
 out() {
   ((quiet)) && return
@@ -96,19 +103,28 @@ progress() {
     printf '%b\n' "$message";
     # \r makes no sense in file or pipe
   else
-    printf '%b\r' "$message                                             ";
+
+    printf '... %-${wprogress}b\r' "$message                                             ";
     # next line will overwrite this line
   fi
 }
-rollback()  { die ; }
+rollback()  { die "$PROGNAME stopped unexpectedly" ; }
 trap rollback INT TERM EXIT
 safe_exit() { trap - INT TERM EXIT ; exit ; }
 
-die()     { out " ${col_red}✖${col_reset}: $@" >&2; safe_exit; }             # die with error message
-alert()   { out " ${col_red}➨${col_reset}: $@" >&2 ; }                       # print error and continue
-success() { out " ${col_grn}✔${col_reset}  $@"; }
-log()     { [[ $verbose -gt 0 ]] && out "${col_ylw}# $@${col_reset}";}
-notify()  { [[ $? == 0 ]] && success "$@" || alert "$@"; }
+die()       { out " ${col_red}✖${col_reset}: $@" >&2; safe_exit; }             # die with error message
+alert()     { out " ${col_red}➨${col_reset}: $@" >&2 ; }                       # print error and continue
+success()   { out " ${col_grn}✔${col_reset}  $@"; }
+announce()  { out " ${col_grn}…${col_reset}  $@"; sleep 1 ; }
+log() { if [[ $verbose -gt 0 ]] ; then
+        out "${col_ylw}# $@${col_reset}"
+      fi 
+      }
+notify()  { if [[ $? == 0 ]] ; then
+        success "$@"
+      else 
+        alert "$@"
+      fi }
 escape()  { echo $@ | sed 's/\//\\\//g' ; }
 
 lcase()   { echo $@ | awk '{print tolower($0)}' ; }
@@ -182,8 +198,8 @@ init_options() {
 }
 
 verify_programs(){
-	log "Running on $(/usr/bin/env bash --version | head -1)"
-	log "Checking programs [$*]"
+	log "Running on $os_uname ($os_version)"
+  log "Checking programs: $(echo $*)]"
 	for prog in $* ; do
 		if [[ -z $(which "$prog") ]] ; then
 			alert "Script needs [$prog] but this program cannot be found on this $os_uname machine"
@@ -206,6 +222,14 @@ folder_prep(){
             find "$folder" -mtime +$maxdays -exec rm {} \;
         fi
 	fi
+}
+
+expects_single_params(){
+  list_options | grep 'param|1|' > /dev/null
+}
+
+expects_multi_param(){
+  list_options | grep 'param|n|' > /dev/null
 }
 
 parse_options() {
@@ -235,32 +259,50 @@ parse_options() {
     done
 
     ## then run through the given parameters
+  if expects_single_params ; then
+    log "Now processing single params"
     single_params=$(list_options | grep 'param|1|' | cut -d'|' -f3)
     nb_singles=$(echo $single_params | wc -w)
-    [[ $nb_singles -gt 0 ]] && [[ $# -eq 0 ]] && die "$PROGNAME needs the parameter(s) [$(echo $single_params)]"
-
-    multi_param=$(list_options | grep 'param|n|' | cut -d'|' -f3)
-    nb_multis=$(echo $multi_param | wc -w)
-    if [[ $nb_multis -gt 1 ]] ; then
-        die "$PROGNAME cannot have more than 1 'multi' parameter: [$(echo $multi_param)]"
+    log "Found $nb_singles parameters: $single_params"
+    if [[ $# -eq 0 ]] ; then
+      # but no single params are given
+      die "$PROGNAME needs the parameter(s) [$(echo $single_params)]"
     fi
 
     for param in $single_params ; do
-        if [[ -z $1 ]] ; then
-            die "$PROGNAME needs parameter [$param]"
-        fi
-        log "$param=$1"
-        eval $param="$1"
-        shift
+      if [[ -z $1 ]] ; then
+        die "$PROGNAME needs parameter [$param]"
+      fi
+      log "$param=$1"
+      eval $param="$1"
+      shift
     done
+  else 
+    log "No single params to process"
+    single_params=""
+    nb_singles=0
+  fi
 
+  if expects_multi_param ; then
+    log "Now processing multi param"
+    nb_multis=$(list_options | grep 'param|n|' | wc -l)
+    multi_param=$(list_options | grep 'param|n|' | cut -d'|' -f3)
+    if [[ $nb_multis -gt 1 ]] ; then
+      die "$PROGNAME cannot have more than 1 'multi' parameter: [$(echo $multi_param)]"
+    fi
     [[ $nb_multis -gt 0 ]] && [[ $# -eq 0 ]] && die "$PROGNAME needs the (multi) parameter [$multi_param]"
-    [[ $nb_multis -eq 0 ]] && [[ $# -gt 0 ]] && die "$PROGNAME cannot interpret extra parameters"
-
     # save the rest of the params in the multi param
-	if [[ -s "$*" ]] ; then
-		eval "$multi_param=( $* )"
-	fi
+    if [[ -n "$*" ]] ; then
+      log "multi_param=( $* )"
+      eval "$multi_param=( $* )"
+    fi
+  else 
+    log "No multi param to process"
+    nb_multis=0
+    multi_param=""
+    [[ $# -gt 0 ]] && die "$PROGNAME cannot interpret extra parameters"
+    log "$PROGNAME: all parameters have been processed"
+  fi
 }
 
 [[ $runasroot == 1  ]] && [[ $UID -ne 0 ]] && die "You MUST be root to run this script"
@@ -270,6 +312,20 @@ parse_options() {
 #####################################################################
 
 ## Put your helper scripts here
+run_only_show_errors(){
+  tmpfile=$(mktemp)
+  if ( $* ) 2>> $tmpfile >> $tmpfile ; then
+    #all OK
+    rm $tmpfile
+    return 0
+  else
+    alert "[$(echo $*)] gave an error"
+    cat $tmpfile
+    rm $tmpfile
+    return -1
+  fi
+}
+
 do_that_thing(){
 	return 0
 	# use as 'do_that_thing && follow up with this'
@@ -290,7 +346,7 @@ main() {
 	log "Start of $PROGNAME $PROGVERS ($PROGDATE)"
     [[ -n "$tmpdir" ]] && folder_prep "$tmpdir" 1
     [[ -n "$logdir" ]] && folder_prep "$logdir" 7
-    verify_programs awk curl cut date echo find grep head ifconfig netstat printf sed stat tail uname 
+    verify_programs awk curl cut date echo find grep head printf sed stat tail uname 
 
     action=$(ucase $action)
     case $action in
@@ -309,7 +365,7 @@ main() {
 
 init_options
 parse_options $@
-log "---- START MAIN" # this will show up even if your main() has errors
+log "---- START $PROGNAME" # this will show up even if your main() has errors
 main
-log "---- FINISH MAIN" # a start needs a finish
+log "---- FINISH $PROGNAME" # a start needs a finish
 safe_exit
