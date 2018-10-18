@@ -1,7 +1,7 @@
 Program: script.sh by peter@forret.com
-Version: v1.2 (hash 61f27fa7)
-Updated: 2018-10-18 12:06
-Usage: script [-h] [-q] [-v] [-f] [-l <logdir>] [-t <tmpdir>] <action> <files> [<...>]
+Version: v1.2 (L:407|MD:d30183d8)
+Updated: 2018-10-18 12:15
+Usage: script.sh [-h] [-q] [-v] [-f] [-l <logdir>] [-t <tmpdir>] <action> <files> [<...>]
 Flags, options and parameters:
     -h|--help      : [flag] show usage [default: off]
     -q|--quiet     : [flag] no output [default: off]

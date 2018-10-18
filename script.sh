@@ -17,7 +17,7 @@ IFS=$'\n\t'
 readonly PROGNAME=$(basename $0 .sh)
 readonly PROGFNAME=$(basename $0)
 readonly PROGDIR=$(cd $(dirname $0); pwd)
-readonly PROGUUID=$(cat $0 | md5sum | cut -c1-8)
+readonly PROGUUID="L:$(cat $0 | wc -l | sed 's/\s//g')|MD:$(cat $0 | md5sum | cut -c1-8)"
 readonly PROGVERS="v1.2"
 readonly PROGAUTH="peter@forret.com"
 readonly USERNAME=$(whoami)
@@ -161,15 +161,15 @@ on_64bit()	{ [[ "$os_bits"  = "x86_64" ]] ;	}
 usage() {
   if ((piped)); then
     out "Program: $PROGFNAME by $PROGAUTH"
-    out "Version: $PROGVERS (hash $PROGUUID)"
+    out "Version: $PROGVERS ($PROGUUID)"
     out "Updated: $PROGDATE"
   else
     out "Program: ${col_grn}$PROGFNAME${col_reset} by ${col_ylw}$PROGAUTH${col_reset}"
-    out "Version: ${col_grn}$PROGVERS${col_reset} (hash ${col_ylw}$PROGUUID${col_reset})"
+    out "Version: ${col_grn}$PROGVERS${col_reset} (${col_ylw}$PROGUUID${col_reset})"
     out "Updated: ${col_grn}$PROGDATE${col_reset}"
   fi
 
-  echo -n "Usage: $PROGNAME"
+  echo -n "Usage: $PROGFNAME"
    list_options \
   | awk '
   BEGIN { FS="|"; OFS=" "; oneline="" ; fulltext="Flags, options and parameters:"}
