@@ -15,11 +15,13 @@ IFS=$'\n\t'
 
 # change program version to your own release logic
 readonly PROGNAME=$(basename $0 .sh)
+readonly PROGFNAME=$(basename $0)
 readonly PROGDIR=$(cd $(dirname $0); pwd)
 readonly PROGUUID=$(cat $0 | md5sum | cut -c1-8)
-readonly PROGVERS="v1.2 - Oct 2018"
+readonly PROGVERS="v1.2"
 readonly PROGAUTH="peter@forret.com"
 readonly USERNAME=$(whoami)
+readonly TODAY=$(date "+%Y-%m-%d")
 [[ -z "${TEMP:-}" ]] && TEMP=/tmp
 
 ### Change the next lines to reflect which flags/options/parameters you need
@@ -77,6 +79,9 @@ readonly nbcols=$(tput cols)
 readonly wprogress=$(expr $nbcols - 5)
 readonly nbrows=$(tput lines)
 
+tmpfile=""
+logfile=""
+
 out() {
   ((quiet)) && return
   local message="$@"
@@ -110,7 +115,11 @@ progress() {
   fi
 }
 trap "die \"[$PROGNAME] stopped because [\$BASH_COMMAND] fails !\" ; " INT TERM EXIT
-safe_exit() { trap - INT TERM EXIT ; exit ; }
+safe_exit() { 
+  [[ -n "$tmpfile" ]] && [[ -f "$tmpfile" ]] && rm "$tmpfile"
+  trap - INT TERM EXIT
+  exit
+}
 
 die()       { out " ${col_red}✖${col_reset}: $@" >&2; safe_exit; }             # die with error message
 alert()     { out " ${col_red}➨${col_reset}: $@" >&2 ; }                       # print error and continue
@@ -151,13 +160,13 @@ on_64bit()	{ [[ "$os_bits"  = "x86_64" ]] ;	}
 
 usage() {
   if ((piped)); then
-    out "Program: $PROGNAME by $PROGAUTH"
-    out "Version: $PROGVERS"
-    out "Updated: $PROGUUID at $PROGDATE"
+    out "Program: $PROGFNAME by $PROGAUTH"
+    out "Version: $PROGVERS (hash $PROGUUID)"
+    out "Updated: $PROGDATE"
   else
-    out "Program: ${col_grn}$PROGNAME${col_reset} by ${col_ylw}$PROGAUTH${col_reset}"
-    out "Version: ${col_grn}$PROGVERS${col_reset}"
-    out "Updated: ${col_grn}$PROGUUID${col_reset} at ${col_ylw}$PROGDATE${col_reset}"
+    out "Program: ${col_grn}$PROGFNAME${col_reset} by ${col_ylw}$PROGAUTH${col_reset}"
+    out "Version: ${col_grn}$PROGVERS${col_reset} (hash ${col_ylw}$PROGUUID${col_reset})"
+    out "Updated: ${col_grn}$PROGDATE${col_reset}"
   fi
 
   echo -n "Usage: $PROGNAME"
@@ -360,10 +369,19 @@ do_the_other_thing(){
 
 ## Put your main script here
 main() {
-    log "Program: $PROGNAME $PROGVERS"
-    log "Updated: $PROGUUID @ $PROGDATE"
-    [[ -n "$tmpdir" ]] && folder_prep "$tmpdir" 1
-    [[ -n "$logdir" ]] && folder_prep "$logdir" 7
+    log "Program: $PROGFNAME $PROGVERS ($PROGUUID)"
+    log "Updated: $PROGDATE"
+    if [[ -n "$tmpdir" ]] ; then
+      folder_prep "$tmpdir" 1
+      tmpfile=$(mktemp $tmpdir/$TODAY.XXXXXX.tmp)
+      log "Temp file: $tmpfile"
+    fi
+    if [[ -n "$logdir" ]] ; then
+      folder_prep "$logdir" 7
+      logfile=$logdir/$PROGNAME.$TODAY.log
+      log "Log file: $logfile"
+      echo "$(date '+%H:%M:%S') | [$PROGFNAME] $PROGVERS ($PROGUUID) started" >> $logfile
+    fi
     verify_programs awk curl cut date echo find grep head md5sum printf sed stat tail uname 
 
     action=$(ucase $action)

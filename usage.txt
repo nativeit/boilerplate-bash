@@ -1,6 +1,6 @@
-Program: script by peter@forret.com
-Version: v1.2 - Oct 2018
-Updated: c05e108b at 2018-10-18 11:26
+Program: script.sh by peter@forret.com
+Version: v1.2 (hash 61f27fa7)
+Updated: 2018-10-18 12:06
 Usage: script [-h] [-q] [-v] [-f] [-l <logdir>] [-t <tmpdir>] <action> <files> [<...>]
 Flags, options and parameters:
     -h|--help      : [flag] show usage [default: off]
