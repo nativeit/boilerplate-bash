@@ -16,7 +16,8 @@ IFS=$'\n\t'
 # change program version to your own release logic
 readonly PROGNAME=$(basename $0 .sh)
 readonly PROGDIR=$(cd $(dirname $0); pwd)
-readonly PROGVERS="v1.0"
+readonly PROGUUID=$(cat $0 | md5sum | cut -c1-8)
+readonly PROGVERS="v1.2 - Oct 2018"
 readonly PROGAUTH="peter@forret.com"
 readonly USERNAME=$(whoami)
 [[ -z "${TEMP:-}" ]] && TEMP=/tmp
@@ -108,7 +109,7 @@ progress() {
     # next line will overwrite this line
   fi
 }
-trap "die \"$PROGNAME stopped because [\$BASH_COMMAND] fails !\" ; " INT TERM EXIT
+trap "die \"[$PROGNAME] stopped because [\$BASH_COMMAND] fails !\" ; " INT TERM EXIT
 safe_exit() { trap - INT TERM EXIT ; exit ; }
 
 die()       { out " ${col_red}✖${col_reset}: $@" >&2; safe_exit; }             # die with error message
@@ -150,7 +151,8 @@ on_64bit()	{ [[ "$os_bits"  = "x86_64" ]] ;	}
 
 usage() {
 out "Program: ${col_grn}$PROGNAME${col_reset} by ${col_ylw}$PROGAUTH${col_reset}"
-out "Version: $PROGVERS - $PROGDATE"
+out "Version: ${col_grn}$PROGVERS${col_reset}"
+out "Updated: ${col_grn}$PROGUUID${col_reset} at ${col_ylw}$PROGDATE${col_reset}"
 echo -n "Usage: $PROGNAME"
  list_options \
 | awk '
@@ -201,7 +203,7 @@ verify_programs(){
   log "Checking programs: $(echo $*)]"
 	for prog in $* ; do
 		if [[ -z $(which "$prog") ]] ; then
-			alert "Script needs [$prog] but this program cannot be found on this $os_uname machine"
+			alert "[$PROGNAME] needs [$prog] but this program cannot be found on this $os_uname machine"
 		fi
 	done
 }
@@ -237,10 +239,19 @@ parse_options() {
     fi
 
     ## first process all the -x --xxxx flags and options
-    while [[ $1 = -?* ]]; do
-        # flag <flag> is savec as $flag = 0/1
-        # option <option> is saved as $option
-       local save_option=$(list_options \
+    #set -x
+    while true; do
+      # flag <flag> is savec as $flag = 0/1
+      # option <option> is saved as $option
+      if [[ $# -eq 0 ]] ; then
+        ## all parameters processed
+        break
+      fi
+      if [[ ! $1 = -?* ]] ; then
+        ## all flags/options processed
+        break
+      fi
+      local save_option=$(list_options \
         | awk -v opt="$1" '
         BEGIN { FS="|"; OFS=" ";}
         $1 ~ /flag/   &&  "-"$2 == opt {print $3"=1"}
@@ -342,10 +353,11 @@ do_the_other_thing(){
 
 ## Put your main script here
 main() {
-	log "Start of $PROGNAME $PROGVERS ($PROGDATE)"
+    log "Program: $PROGNAME $PROGVERS"
+    log "Updated: $PROGUUID @ $PROGDATE"
     [[ -n "$tmpdir" ]] && folder_prep "$tmpdir" 1
     [[ -n "$logdir" ]] && folder_prep "$logdir" 7
-    verify_programs awk curl cut date echo find grep head printf sed stat tail uname 
+    verify_programs awk curl cut date echo find grep head md5sum printf sed stat tail uname 
 
     action=$(ucase $action)
     case $action in
@@ -364,7 +376,7 @@ main() {
 
 init_options
 parse_options $@
-log "---- START $PROGNAME" # this will show up even if your main() has errors
+log "-------------- STARTING (main) $PROGNAME" # this will show up even if your main() has errors
 main
-log "---- FINISH $PROGNAME" # a start needs a finish
+log "---------------- FINISH (main) $PROGNAME" # a start needs a finish
 safe_exit
