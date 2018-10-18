@@ -1,6 +1,6 @@
-Program: [1;32mscript[0m by [1;33mpeter@forret.com[0m
-Version: [1;32mv1.2 - Oct 2018[0m
-Updated: [1;32mbb45f518[0m at [1;33m2018-10-18 11:19[0m
+Program: script by peter@forret.com
+Version: v1.2 - Oct 2018
+Updated: c05e108b at 2018-10-18 11:26
 Usage: script [-h] [-q] [-v] [-f] [-l <logdir>] [-t <tmpdir>] <action> <files> [<...>]
 Flags, options and parameters:
     -h|--help      : [flag] show usage [default: off]

@@ -150,37 +150,44 @@ on_32bit()	{ [[ "$os_bits"  = "i386" ]] ;	}
 on_64bit()	{ [[ "$os_bits"  = "x86_64" ]] ;	}
 
 usage() {
-out "Program: ${col_grn}$PROGNAME${col_reset} by ${col_ylw}$PROGAUTH${col_reset}"
-out "Version: ${col_grn}$PROGVERS${col_reset}"
-out "Updated: ${col_grn}$PROGUUID${col_reset} at ${col_ylw}$PROGDATE${col_reset}"
-echo -n "Usage: $PROGNAME"
- list_options \
-| awk '
-BEGIN { FS="|"; OFS=" "; oneline="" ; fulltext="Flags, options and parameters:"}
-$1 ~ /flag/  {
-  fulltext = fulltext sprintf("\n    -%1s|--%-10s: [flag] %s [default: off]",$2,$3,$4) ;
-  oneline  = oneline " [-" $2 "]"
-  }
-$1 ~ /option/  {
-  fulltext = fulltext sprintf("\n    -%1s|--%s <%s>: [optn] %s",$2,$3,"val",$4) ;
-  if($5!=""){fulltext = fulltext "  [default: " $5 "]"; }
-  oneline  = oneline " [-" $2 " <" $3 ">]"
-  }
-$1 ~ /secret/  {
-  fulltext = fulltext sprintf("\n    -%1s|--%s <%s>: [secr] %s",$2,$3,"val",$4) ;
+  if ((piped)); then
+    out "Program: $PROGNAME by $PROGAUTH"
+    out "Version: $PROGVERS"
+    out "Updated: $PROGUUID at $PROGDATE"
+  else
+    out "Program: ${col_grn}$PROGNAME${col_reset} by ${col_ylw}$PROGAUTH${col_reset}"
+    out "Version: ${col_grn}$PROGVERS${col_reset}"
+    out "Updated: ${col_grn}$PROGUUID${col_reset} at ${col_ylw}$PROGDATE${col_reset}"
+  fi
+
+  echo -n "Usage: $PROGNAME"
+   list_options \
+  | awk '
+  BEGIN { FS="|"; OFS=" "; oneline="" ; fulltext="Flags, options and parameters:"}
+  $1 ~ /flag/  {
+    fulltext = fulltext sprintf("\n    -%1s|--%-10s: [flag] %s [default: off]",$2,$3,$4) ;
+    oneline  = oneline " [-" $2 "]"
+    }
+  $1 ~ /option/  {
+    fulltext = fulltext sprintf("\n    -%1s|--%s <%s>: [optn] %s",$2,$3,"val",$4) ;
+    if($5!=""){fulltext = fulltext "  [default: " $5 "]"; }
     oneline  = oneline " [-" $2 " <" $3 ">]"
-  }
-$1 ~ /param/ {
-  if($2 == "1"){
-        fulltext = fulltext sprintf("\n    %-10s: [parameter] %s","<"$3">",$4);
-        oneline  = oneline " <" $3 ">"
-   } else {
-        fulltext = fulltext sprintf("\n    %-10s: [parameters] %s (1 or more)","<"$3">",$4);
-        oneline  = oneline " <" $3 "> [<...>]"
-   }
-  }
-  END {print oneline; print fulltext}
-'
+    }
+  $1 ~ /secret/  {
+    fulltext = fulltext sprintf("\n    -%1s|--%s <%s>: [secr] %s",$2,$3,"val",$4) ;
+      oneline  = oneline " [-" $2 " <" $3 ">]"
+    }
+  $1 ~ /param/ {
+    if($2 == "1"){
+          fulltext = fulltext sprintf("\n    %-10s: [parameter] %s","<"$3">",$4);
+          oneline  = oneline " <" $3 ">"
+     } else {
+          fulltext = fulltext sprintf("\n    %-10s: [parameters] %s (1 or more)","<"$3">",$4);
+          oneline  = oneline " <" $3 "> [<...>]"
+     }
+    }
+    END {print oneline; print fulltext}
+  '
 }
 
 init_options() {
