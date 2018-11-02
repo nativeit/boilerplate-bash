@@ -18,10 +18,11 @@ readonly PROGNAME=$(basename $0 .sh)
 readonly PROGFNAME=$(basename $0)
 readonly PROGDIR=$(cd $(dirname $0); pwd)
 readonly PROGUUID="L:$(cat $0 | wc -l | sed 's/\s//g')|MD:$(cat $0 | md5sum | cut -c1-8)"
-readonly PROGVERS="v1.2"
+readonly PROGVERS="v1.3"
 readonly PROGAUTH="peter@forret.com"
 readonly USERNAME=$(whoami)
 readonly TODAY=$(date "+%Y-%m-%d")
+readonly PROGIDEN="«$PROGNAME $PROGVERS»"
 [[ -z "${TEMP:-}" ]] && TEMP=/tmp
 
 ### Change the next lines to reflect which flags/options/parameters you need
@@ -41,7 +42,7 @@ flag|v|verbose|output more
 flag|f|force|do not ask for confirmation
 option|l|logdir|folder for log files |./log
 option|t|tmpdir|folder for temp files|$TEMP/$PROGNAME
-#option|u|user|username to use|$USER
+#option|u|user|username to use|$USERNAME
 #secret|p|pass|password to use
 param|1|action|action to perform: LIST/...
 # there can only be 1 param|n and it should be the last
@@ -114,7 +115,7 @@ progress() {
     # next line will overwrite this line
   fi
 }
-trap "die \"[$PROGNAME] stopped because [\$BASH_COMMAND] fails !\" ; " INT TERM EXIT
+trap "die \"$PROGIDEN stopped because [\$BASH_COMMAND] fails !\" ; " INT TERM EXIT
 safe_exit() { 
   [[ -n "$tmpfile" ]] && [[ -f "$tmpfile" ]] && rm "$tmpfile"
   trap - INT TERM EXIT
@@ -192,11 +193,12 @@ usage() {
           oneline  = oneline " <" $3 ">"
      } else {
           fulltext = fulltext sprintf("\n    %-10s: [parameters] %s (1 or more)","<"$3">",$4);
-          oneline  = oneline " <" $3 "> [<...>]"
+          oneline  = oneline " <" $3 " …>"
      }
     }
     END {print oneline; print fulltext}
   '
+
 }
 
 init_options() {
@@ -219,7 +221,7 @@ verify_programs(){
   log "Checking programs: $(echo $*)]"
 	for prog in $* ; do
 		if [[ -z $(which "$prog") ]] ; then
-			alert "[$PROGNAME] needs [$prog] but this program cannot be found on this $os_uname machine"
+			alert "$PROGIDEN needs [$prog] but this program cannot be found on this $os_uname machine"
 		fi
 	done
 }
@@ -236,7 +238,7 @@ folder_prep(){
             mkdir "$folder"
         else
             log "Cleanup folder [$folder] - delete older than $maxdays day(s)"
-            find "$folder" -mtime +$maxdays -exec rm {} \;
+            find "$folder" -mtime +$maxdays -type f -exec rm {} \;
         fi
 	fi
 }
@@ -279,7 +281,7 @@ parse_options() {
             #log "parse_options: $save_option"
             eval $save_option
         else
-            die "$PROGNAME cannot interpret option [$1]"
+            die "$PROGIDEN cannot interpret option [$1]"
         fi
         shift
     done
@@ -290,15 +292,11 @@ parse_options() {
     single_params=$(list_options | grep 'param|1|' | cut -d'|' -f3)
     nb_singles=$(echo $single_params | wc -w)
     log "Found $nb_singles parameters: $single_params"
-    if [[ $# -eq 0 ]] ; then
-      # but no single params are given
-      die "$PROGNAME needs the parameter(s) [$(echo $single_params)]"
-    fi
-
+    [[ $# -eq 0 ]]  && die "$PROGIDEN needs the parameter(s) [$(echo $single_params)]"
+    
     for param in $single_params ; do
-      if [[ -z $1 ]] ; then
-        die "$PROGNAME needs parameter [$param]"
-      fi
+      [[ $# -eq 0 ]] && die "$PROGIDEN needs parameter [$param]"
+      [[ -z "$1" ]]  && die "$PROGIDEN needs parameter [$param]"
       log "$param=$1"
       eval $param="$1"
       shift
@@ -313,10 +311,8 @@ parse_options() {
     log "Now processing multi param"
     nb_multis=$(list_options | grep 'param|n|' | wc -l)
     multi_param=$(list_options | grep 'param|n|' | cut -d'|' -f3)
-    if [[ $nb_multis -gt 1 ]] ; then
-      die "$PROGNAME cannot have more than 1 'multi' parameter: [$(echo $multi_param)]"
-    fi
-    [[ $nb_multis -gt 0 ]] && [[ $# -eq 0 ]] && die "$PROGNAME needs the (multi) parameter [$multi_param]"
+    [[ $nb_multis -gt 1 ]]  && die "$PROGIDEN cannot have >1 'multi' parameter: [$(echo $multi_param)]"
+    [[ $nb_multis -gt 0 ]] && [[ $# -eq 0 ]] && die "$PROGIDEN needs the (multi) parameter [$multi_param]"
     # save the rest of the params in the multi param
     if [[ -n "$*" ]] ; then
       log "multi_param=( $* )"
@@ -326,13 +322,13 @@ parse_options() {
     log "No multi param to process"
     nb_multis=0
     multi_param=""
-    [[ $# -gt 0 ]] && die "$PROGNAME cannot interpret extra parameters"
+    [[ $# -gt 0 ]] && die "$PROGIDEN cannot interpret extra parameters"
     log "$PROGNAME: all parameters have been processed"
   fi
 }
 
-[[ $runasroot == 1  ]] && [[ $UID -ne 0 ]] && die "You MUST be root to run this script"
-[[ $runasroot == -1 ]] && [[ $UID -eq 0 ]] && die "You MAY NOT be root to run this script"
+[[ $runasroot == 1  ]] && [[ $UID -ne 0 ]] && die "$PROGIDEN: MUST be root to run this script"
+[[ $runasroot == -1 ]] && [[ $UID -eq 0 ]] && die "$PROGIDEN: CANNOT be root to run this script"
 
 ################### DO NOT MODIFY ABOVE THIS LINE ###################
 #####################################################################
@@ -392,7 +388,7 @@ main() {
         do_that_thing && do_the_other_thing "this is the output" "for you" 
         ;;
     *)
-        die "Action [$action] not recognized"
+        die "$PROGIDEN: param [$action] not recognized"
     esac
 }
 

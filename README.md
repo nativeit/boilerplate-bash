@@ -26,20 +26,19 @@
 ## Example usage
 
 ```
-### Program: script by peter@forret.com
-### Version: v1.0 - 2018-02-20 11:22
-### Usage: script [-h] [-q] [-v] [-f] [-l <logdir>] [-t <tmpdir>] [-u <user>] [-p <pass>] <action> <file> [<...>]
-### Flags, options and parameters:
+Program: script.sh by peter@forret.com
+Version: v1.2 (L:407|MD:d30183d8)
+Updated: 2018-10-18 12:15
+Usage: script.sh [-h] [-q] [-v] [-f] [-l <logdir>] [-t <tmpdir>] <action> <files> [<...>]
+Flags, options and parameters:
     -h|--help      : [flag] show usage [default: off]
     -q|--quiet     : [flag] no output [default: off]
     -v|--verbose   : [flag] output more [default: off]
     -f|--force     : [flag] do not ask for confirmation [default: off]
     -l|--logdir <val>: [optn] folder for log files   [default: ./log]
     -t|--tmpdir <val>: [optn] folder for temp files  [default: /tmp/script]
-    -u|--user <val>: [optn] username to use  [default: admin]
-    -p|--pass <val>: [secr] password to use
     <action>  : [parameter] action to perform: LIST/...
-    <file>    : [parameter] file(s) to perform on (1 or more)
+    <files>   : [parameters] file(s) to perform on (1 or more)
 ```
 
 ## Functions
@@ -53,6 +52,7 @@
 * `log()` Will only output message if user has activated verbose flag.
 * `progress()` Output line but do only \r, not \n so line will be overwritten by next output line.
 * `notify()` Delegate the message to either `err` or `success` depending on the last return code.
+* ...
 
 ### Misc helpers
 
@@ -64,6 +64,13 @@
     continue;
   fi
   ```
+
+## Versions
+
+* v1.3: robuster parameter parsing
+* v1.2: better error trap and versioning info
+* v1.1: better single and multi param parsing
+* v1.0: first release
 
 ## Acknowledgment
 
