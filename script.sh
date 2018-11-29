@@ -3,7 +3,6 @@
 # uncomment next line to have time prefix for every output line
 #prefix_fmt='+%H:%M:%S | '
 prefix_fmt=""
-
 runasroot=-1
 # runasroot = 0 :: don't check anything
 # runasroot = 1 :: script MUST run as root
@@ -12,13 +11,22 @@ runasroot=-1
 # set strict mode -  via http://redsymbol.net/articles/unofficial-bash-strict-mode/
 set -euo pipefail
 IFS=$'\n\t'
+hash(){
+  if [[ -n $(which md5sum) ]] ; then
+    # regular linux
+    md5sum | cut -c1-6
+  else
+    # macos
+    md5 | cut -c1-6
+  fi 
+}
 
 # change program version to your own release logic
 readonly PROGNAME=$(basename $0 .sh)
 readonly PROGFNAME=$(basename $0)
 readonly PROGDIR=$(cd $(dirname $0); pwd)
-readonly PROGUUID="L:$(cat $0 | wc -l | sed 's/\s//g')|MD:$(cat $0 | md5sum | cut -c1-8)"
-readonly PROGVERS="v1.3"
+readonly PROGUUID="L:$(< $0 awk 'END {print NR}')-MD:$(< $0 hash)"
+readonly PROGVERS="v1.4"
 readonly PROGAUTH="peter@forret.com"
 readonly USERNAME=$(whoami)
 readonly TODAY=$(date "+%Y-%m-%d")
@@ -40,11 +48,11 @@ flag|h|help|show usage
 flag|q|quiet|no output
 flag|v|verbose|output more
 flag|f|force|do not ask for confirmation
-option|l|logdir|folder for log files |./log
-option|t|tmpdir|folder for temp files|$TEMP/$PROGNAME
+option|l|logd|folder for log files |./log
+option|t|tmpd|folder for temp files|$TEMP/$PROGNAME
 #option|u|user|username to use|$USERNAME
 #secret|p|pass|password to use
-param|1|action|action to perform: LIST/...
+param|1|action|action to perform: LIST/TEST/...
 # there can only be 1 param|n and it should be the last
 param|n|files|file(s) to perform on
 " | grep -v '^#'
@@ -65,16 +73,40 @@ quiet=0
 piped=0
 force=0
 
+[[ $# -gt 0 ]] && [[ $1 == "-v" ]] && verbose=1
+#to enable verbose even for option parsing
+
 [[ -t 1 ]] && piped=0 || piped=1        # detect if out put is piped
 [[ $(echo -e '\xe2\x82\xac') == '€' ]] && unicode=1 || unicode=0 # detect if unicode is supported
 
 # Defaults
 args=()
 
-readonly col_reset="\033[0m"
-readonly col_red="\033[1;31m"
-readonly col_grn="\033[1;32m"
-readonly col_ylw="\033[1;33m"
+if [[ $piped -eq 0 ]] ; then
+  readonly col_reset="\033[0m"
+  readonly col_red="\033[1;31m"
+  readonly col_grn="\033[1;32m"
+  readonly col_ylw="\033[1;33m"
+else
+  # no colors for piped content
+  readonly col_reset=""
+  readonly col_red=""
+  readonly col_grn=""
+  readonly col_ylw=""
+fi
+
+if [[ $unicode -gt 0 ]] ; then
+  readonly char_succ="✔"
+  readonly char_fail="✖"
+  readonly char_alrt="➨"
+  readonly char_wait="…"
+else
+  # no unicode chars if not supported
+  readonly char_succ="OK "
+  readonly char_fail="!! "
+  readonly char_alrt="?? "
+  readonly char_wait="..."
+fi
 
 readonly nbcols=$(tput cols)
 readonly wprogress=$(expr $nbcols - 5)
@@ -90,18 +122,10 @@ out() {
   if [[ -n $prefix_fmt ]]; then
     prefix=$(date "$prefix_fmt")
   fi
-  if ((piped)); then
-    message=$(echo $message | sed '
-      s/\\[0-9]\{3\}\[[0-9]\(;[0-9]\{2\}\)\?m//g;
-      s/✖/!!/g;
-      s/➨/??/g;
-      s/✔/  /g;
-    ')
-    printf '%b\n' "$prefix$message";
-  else
-    printf '%b\n' "$prefix$message";
-  fi
+  printf '%b\n' "$prefix$message";
 }
+#TIP: use «out» to show any kind of output, except when option --quiet is specified
+#TIP:> out "User is [$USERNAME]"
 
 progress() {
   ((quiet)) && return
@@ -115,6 +139,9 @@ progress() {
     # next line will overwrite this line
   fi
 }
+#TIP: use «progress» to show one line of progress that will be overwritten by the next output
+#TIP:> progress "Now generating file $nb of $total ..."
+
 trap "die \"$PROGIDEN stopped because [\$BASH_COMMAND] fails !\" ; " INT TERM EXIT
 safe_exit() { 
   [[ -n "$tmpfile" ]] && [[ -f "$tmpfile" ]] && rm "$tmpfile"
@@ -122,32 +149,55 @@ safe_exit() {
   exit
 }
 
-die()       { out " ${col_red}✖${col_reset}: $@" >&2; safe_exit; }             # die with error message
-alert()     { out " ${col_red}➨${col_reset}: $@" >&2 ; }                       # print error and continue
-success()   { out " ${col_grn}✔${col_reset}  $@"; }
-announce()  { out " ${col_grn}…${col_reset}  $@"; sleep 1 ; }
+is_set()      { local target=$1 ; [[ $target -gt 0 ]] ; }
+is_empty()    { local target=$1 ; [[ -z $target ]] ; }
+is_not_empty() { local target=$1;  [[ -n $target ]] ; }
+#TIP: use «is_empty» and «is_not_empty» to test for variables
+#TIP:> if ! confirm "Delete file"; then ; echo "skip deletion" ;   fi
+
+is_file() { local target=$1; [[ -f $target ]] ; }
+is_dir()  { local target=$1; [[ -d $target ]] ; }
+
+die()     { out "${col_red}${char_fail} $PROGIDEN${col_reset}: $@" >&2; safe_exit; }
+fail()    { out "${col_red}${char_fail} $PROGIDEN${col_reset}: $@" >&2; safe_exit; }
+#TIP: use «die» to show error message and exit program
+#TIP:> if [[ ! -f $output ]] ; then ; die "could not create output" ; fi
+
+alert()   { out "${col_red}${char_alrt}${col_reset}: $@" >&2 ; }                       # print error and continue
+#TIP: use «alert» to show alert message but continue
+#TIP:> if [[ ! -f $output ]] ; then ; alert "could not create output" ; fi
+
+success() { out "${col_grn}${char_succ}${col_reset}  $@"; }
+#TIP: use «success» to show success message but continue
+#TIP:> if [[ -f $output ]] ; then ; success "output was created!" ; fi
+
+announce()  { out "${col_grn}${char_wait}${col_reset}  $@"; sleep 1 ; }
+#TIP: use «announce» to show the start of a task
+#TIP:> announce "now generating the reports"
+
 log() { if [[ $verbose -gt 0 ]] ; then
-        out "${col_ylw}# $@${col_reset}"
-      fi 
-      }
+  out "${col_ylw}# $@${col_reset}"
+fi ;   } # for some reason this always fails if I use ((verbose)) && 
+#TIP: use «log» to information that will only be visible when -v is specified
+#TIP:> log "input file: [$inputname] - [$inputsize] MB"
+
 notify()  { if [[ $? == 0 ]] ; then
         success "$@"
       else 
         alert "$@"
       fi }
 escape()  { echo $@ | sed 's/\//\\\//g' ; }
+#TIP: use «escape» to extra escape '/' paths in regex
+#TIP:> sed 's/$(escape $path)//g'
 
 lcase()   { echo $@ | awk '{print tolower($0)}' ; }
 ucase()   { echo $@ | awk '{print toupper($0)}' ; }
+#TIP: use «lcase» and «ucase» to convert to upper/lower case
+#TIP:> param=$(lcase $param)
 
 confirm() { (($force)) && return 0; read -p "$1 [y/N] " -n 1; echo " "; [[ $REPLY =~ ^[Yy]$ ]];}
-
-is_set()     { local target=$1 ; [[ $target -gt 0 ]] ; }
-is_empty()     { local target=$1 ; [[ -z $target ]] ; }
-is_not_empty() { local target=$1;  [[ -n $target ]] ; }
-
-is_file() { local target=$1; [[ -f $target ]] ; }
-is_dir()  { local target=$1; [[ -d $target ]] ; }
+#TIP: use «confirm» for interactive confirmation before doing something
+#TIP:> if ! confirm "Delete file"; then ; echo "skip deletion" ;   fi
 
 os_uname=$(uname -s)
 os_bits=$(uname -m)
@@ -156,19 +206,16 @@ os_version=$(uname -v)
 on_mac()	{ [[ "$os_uname" = "Darwin" ]] ;	}
 on_linux()	{ [[ "$os_uname" = "Linux" ]] ;	}
 on_ubuntu()	{ [[ -n $(echo $os_version | grep Ubuntu) ]] ;	}
+
 on_32bit()	{ [[ "$os_bits"  = "i386" ]] ;	}
 on_64bit()	{ [[ "$os_bits"  = "x86_64" ]] ;	}
+#TIP: use «on_mac»/«on_linux»/«on_ubuntu»/'on_32bit'/'on_64bit' to only run things on certain platforms
+#TIP:> on_mac && log "Running on MacOS"
 
 usage() {
-  if ((piped)); then
-    out "Program: $PROGFNAME by $PROGAUTH"
-    out "Version: $PROGVERS ($PROGUUID)"
-    out "Updated: $PROGDATE"
-  else
-    out "Program: ${col_grn}$PROGFNAME${col_reset} by ${col_ylw}$PROGAUTH${col_reset}"
-    out "Version: ${col_grn}$PROGVERS${col_reset} (${col_ylw}$PROGUUID${col_reset})"
-    out "Updated: ${col_grn}$PROGDATE${col_reset}"
-  fi
+  out "Program: ${col_grn}$PROGFNAME${col_reset} by ${col_ylw}$PROGAUTH${col_reset}"
+  out "Version: ${col_grn}$PROGVERS${col_reset} (${col_ylw}$PROGUUID${col_reset})"
+  out "Updated: ${col_grn}$PROGDATE${col_reset}"
 
   echo -n "Usage: $PROGFNAME"
    list_options \
@@ -198,7 +245,15 @@ usage() {
     }
     END {print oneline; print fulltext}
   '
+}
 
+tips(){
+  cat $0 \
+  | grep -v '$0' \
+  | awk "
+  /TIP: / {\$1=\"\"; gsub(/«/,\"$col_grn\"); gsub(/»/,\"$col_reset\"); print \"*\" \$0}
+  /TIP:> / {\$1=\"\"; print \" $col_ylw\" \$0 \"$col_reset\"}
+  "
 }
 
 init_options() {
@@ -217,13 +272,28 @@ init_options() {
 }
 
 verify_programs(){
-	log "Running on $os_uname ($os_version)"
-  log "Checking programs: $(echo $*)]"
-	for prog in $* ; do
-		if [[ -z $(which "$prog") ]] ; then
-			alert "$PROGIDEN needs [$prog] but this program cannot be found on this $os_uname machine"
-		fi
-	done
+  log "Running: on $os_uname ($os_version)"
+  listhash=$(echo $* | hash)
+  okfile="$PROGDIR/.$PROGNAME.$listhash.verified"
+  if [[ -f "$okfile" ]] ; then
+    log "Verify : $(echo $*) -- cached]"
+  else 
+    log "Verify : $(echo $*)]"
+    okall=1
+    for prog in $* ; do
+      if [[ -z $(which "$prog") ]] ; then
+        alert "$PROGIDEN needs [$prog] but this program cannot be found on this $os_uname machine"
+        okall=0
+      fi
+    done
+    if [[ $okall -eq 1 ]] ; then
+      (
+        echo $PROGNAME: check required programs OK
+        echo $* 
+        date 
+      ) > "$okfile"
+    fi
+  fi
 }
 
 folder_prep(){
@@ -237,11 +307,13 @@ folder_prep(){
             log "Create folder [$folder]"
             mkdir "$folder"
         else
-            log "Cleanup folder [$folder] - delete older than $maxdays day(s)"
+            log "Cleanup: [$folder] - delete files older than $maxdays day(s)"
             find "$folder" -mtime +$maxdays -type f -exec rm {} \;
         fi
 	fi
 }
+#TIP: use «folder_prep» to create a folder if needed and otherwise clean up old files
+#TIP:> folder_prep "$logd" 7 # delete all files olders than 7 days
 
 expects_single_params(){
   list_options | grep 'param|1|' > /dev/null
@@ -278,26 +350,39 @@ parse_options() {
         $1 ~ /option/ && "--"$3 == opt {print $3"=$2; shift"}
         ')
         if [[ -n "$save_option" ]] ; then
-            #log "parse_options: $save_option"
+          if echo "$save_option" | grep shift >> /dev/null ; then
+            log "Found  : $(echo $save_option | cut -d= -f1)=$2"
+          else
+            log "Found  : $save_option"
+          fi
             eval $save_option
         else
-            die "$PROGIDEN cannot interpret option [$1]"
+            die "cannot interpret option [$1]"
         fi
         shift
     done
 
+    if [[ $help -gt 0 ]] ; then
+      echo "### USAGE"
+      usage
+      echo ""
+      echo "### SCRIPT AUTHORING TIPS"
+      tips
+      safe_exit
+    fi
+
     ## then run through the given parameters
   if expects_single_params ; then
-    log "Now processing single params"
+    #log "Process: single params"
     single_params=$(list_options | grep 'param|1|' | cut -d'|' -f3)
     nb_singles=$(echo $single_params | wc -w)
-    log "Found $nb_singles parameters: $single_params"
-    [[ $# -eq 0 ]]  && die "$PROGIDEN needs the parameter(s) [$(echo $single_params)]"
+    log "Expect : $nb_singles single parameter(s): $single_params"
+    [[ $# -eq 0 ]]  && die "need the parameter(s) [$(echo $single_params)]"
     
     for param in $single_params ; do
-      [[ $# -eq 0 ]] && die "$PROGIDEN needs parameter [$param]"
-      [[ -z "$1" ]]  && die "$PROGIDEN needs parameter [$param]"
-      log "$param=$1"
+      [[ $# -eq 0 ]] && die "need parameter [$param]"
+      [[ -z "$1" ]]  && die "need parameter [$param]"
+      log "Found  : $param=$1"
       eval $param="$1"
       shift
     done
@@ -308,27 +393,28 @@ parse_options() {
   fi
 
   if expects_multi_param ; then
-    log "Now processing multi param"
+    #log "Process: multi param"
     nb_multis=$(list_options | grep 'param|n|' | wc -l)
     multi_param=$(list_options | grep 'param|n|' | cut -d'|' -f3)
-    [[ $nb_multis -gt 1 ]]  && die "$PROGIDEN cannot have >1 'multi' parameter: [$(echo $multi_param)]"
-    [[ $nb_multis -gt 0 ]] && [[ $# -eq 0 ]] && die "$PROGIDEN needs the (multi) parameter [$multi_param]"
+    log "Expect : $nb_multis multi parameter: $multi_param"
+    [[ $nb_multis -gt 1 ]]  && die "cannot have >1 'multi' parameter: [$(echo $multi_param)]"
+    [[ $nb_multis -gt 0 ]] && [[ $# -eq 0 ]] && die "need the (multi) parameter [$multi_param]"
     # save the rest of the params in the multi param
     if [[ -n "$*" ]] ; then
-      log "multi_param=( $* )"
+      log "Found  : $multi_param=$(echo $*)"
       eval "$multi_param=( $* )"
     fi
   else 
     log "No multi param to process"
     nb_multis=0
     multi_param=""
-    [[ $# -gt 0 ]] && die "$PROGIDEN cannot interpret extra parameters"
-    log "$PROGNAME: all parameters have been processed"
+    [[ $# -gt 0 ]] && die "cannot interpret extra parameters"
+    log "all parameters have been processed"
   fi
 }
 
-[[ $runasroot == 1  ]] && [[ $UID -ne 0 ]] && die "$PROGIDEN: MUST be root to run this script"
-[[ $runasroot == -1 ]] && [[ $UID -eq 0 ]] && die "$PROGIDEN: CANNOT be root to run this script"
+[[ $runasroot == 1  ]] && [[ $UID -ne 0 ]] && die "MUST be root to run this script"
+[[ $runasroot == -1 ]] && [[ $UID -eq 0 ]] && die "CANNOT be root to run this script"
 
 ################### DO NOT MODIFY ABOVE THIS LINE ###################
 #####################################################################
@@ -347,57 +433,49 @@ run_only_show_errors(){
     return -1
   fi
 }
-
-do_that_thing(){
-	return 0
-	# use as 'do_that_thing && follow up with this'
-}
-
-do_the_other_thing(){
-	local param1="$1"
-	[[ -z "$param1" ]] && return 1
-	local param2=0
-	[[ -n "$2" ]] && param2="$2"
-	echo "$1:$2"
-	# use as 'value=$(do_the_other_thing)'
-}
+#TIP: use «run_only_show_errors» to run a program and only show the output if there was an error
+#TIP:> run_only_show_errors mv $tmpd/* $outd/
 
 
 ## Put your main script here
 main() {
     log "Program: $PROGFNAME $PROGVERS ($PROGUUID)"
     log "Updated: $PROGDATE"
-    if [[ -n "$tmpdir" ]] ; then
-      folder_prep "$tmpdir" 1
-      tmpfile=$(mktemp $tmpdir/$TODAY.XXXXXX.tmp)
-      log "Temp file: $tmpfile"
+    log "Run as : $USERNAME@$HOSTNAME"
+    if [[ -n "$tmpd" ]] ; then
+      folder_prep "$tmpd" 1
+      tmpfile=$(mktemp $tmpd/$TODAY.XXXXXX.tmp)
+      log "Tmpfile: $tmpfile"
+      # you can use this teporary file in your program
+      # it will be deleted automatically if the program ends without problems
     fi
-    if [[ -n "$logdir" ]] ; then
-      folder_prep "$logdir" 7
-      logfile=$logdir/$PROGNAME.$TODAY.log
-      log "Log file: $logfile"
+    if [[ -n "$logd" ]] ; then
+      folder_prep "$logd" 7
+      logfile=$logd/$PROGNAME.$TODAY.log
+      log "Logfile: $logfile"
       echo "$(date '+%H:%M:%S') | [$PROGFNAME] $PROGVERS ($PROGUUID) started" >> $logfile
     fi
-    verify_programs awk curl cut date echo find grep head md5sum printf sed stat tail uname 
+    verify_programs awk curl cut date echo find grep head printf sed stat tail uname wc
+    # add programs you need in your script here, like tar, wget, ...
 
     action=$(ucase $action)
     case $action in
-    LIST )
-        on_mac && log "Running on MacOS"
-        on_linux && log "Running on Linux"
-        do_that_thing && do_the_other_thing "this is the output" "for you" 
+    TEST )
+        on_mac && success "Running on MacOS"
+        on_linux && success "Running on Linux"
         ;;
     *)
-        die "$PROGIDEN: param [$action] not recognized"
+        die "param [$action] not recognized"
     esac
 }
 
 #####################################################################
 ################### DO NOT MODIFY BELOW THIS LINE ###################
 
+log "-------- PREPARE $PROGIDEN" # this will show up even if your main() has errors
 init_options
 parse_options $@
-log "-------------- STARTING (main) $PROGNAME" # this will show up even if your main() has errors
+log "-------- STARTING (main) $PROGIDEN" # this will show up even if your main() has errors
 main
-log "---------------- FINISH (main) $PROGNAME" # a start needs a finish
+log "-------- FINISH   (main) $PROGIDEN" # a start needs a finish
 safe_exit
