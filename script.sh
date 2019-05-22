@@ -30,7 +30,7 @@ readonly PROGVERS="v1.4"
 readonly PROGAUTH="peter@forret.com"
 readonly USERNAME=$(whoami)
 readonly TODAY=$(date "+%Y-%m-%d")
-readonly PROGIDEN="«$PROGNAME $PROGVERS»"
+readonly PROGIDEN="«${PROGNAME} ${PROGVERS}»"
 [[ -z "${TEMP:-}" ]] && TEMP=/tmp
 
 ### Change the next lines to reflect which flags/options/parameters you need
@@ -60,11 +60,10 @@ param|n|files|file(s) to perform on
 
 #####################################################################
 ################### DO NOT MODIFY BELOW THIS LINE ###################
-
-PROGDATE=$(stat -c %y "$0" 2>/dev/null | cut -c1-16) # generic linux
-if [[ -z $PROGDATE ]] ; then
-  PROGDATE=$(stat -f "%Sm" "$0" 2>/dev/null) # for MacOS
-fi
+PROGDATE="??"
+os_uname=$(uname -s)
+[[ "$os_uname" = "Linux" ]]  && PROGDATE=$(stat -c %y "$0" 2>/dev/null | cut -c1-16) # generic linux
+[[ "$os_uname" = "Darwin" ]] && PROGDATE=$(stat -f "%Sm" "$0" 2>/dev/null) # for MacOS
 
 readonly ARGS="$@"
 #set -e                                  # Exit immediately on error
