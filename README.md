@@ -1,17 +1,18 @@
 ### USAGE
       Program: script.sh by peter@forret.com
-      Version: v1.4 (L:458-MD:1ab427)
-      Updated: 2018-11-29 17:37
-      Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <files …>
+      Version: v1.5 (L:511-MD:cf9be6)
+      Updated: May 12 19:51:10 2020
+      Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
       Flags, options and parameters:
           -h|--help      : [flag] show usage [default: off]
           -q|--quiet     : [flag] no output [default: off]
           -v|--verbose   : [flag] output more [default: off]
           -f|--force     : [flag] do not ask for confirmation [default: off]
-          -l|--logd <val>: [optn] folder for log files   [default: ./log]
-          -t|--tmpd <val>: [optn] folder for temp files  [default: /tmp/script]
+          -l|--logd <val>: [optn] folder for log files   [default: log]
+          -t|--tmpd <val>: [optn] folder for temp files  [default: .tmp]
           <action>  : [parameter] action to perform: LIST/TEST/...
-          <files>   : [parameters] file(s) to perform on (1 or more)
+          <output>  : [parameter] output file
+          <inputs>  : [parameters] input files (1 or more)
       
 ### SCRIPT AUTHORING TIPS
       * use out to show any kind of output, except when option --quiet is specified
@@ -28,7 +29,7 @@
         if [[ -f $output ]] ; then ; success "output was created!" ; fi
       * use announce to show the start of a task
         announce "now generating the reports"
-      * use log to information that will only be visible when -v is specified
+      * use log to show information that will only be visible when -v is specified
         log "input file: [$inputname] - [$inputsize] MB"
       * use escape to extra escape '/' paths in regex
         sed 's/$(escape $path)//g'
@@ -36,13 +37,14 @@
         param=$(lcase $param)
       * use confirm for interactive confirmation before doing something
         if ! confirm "Delete file"; then ; echo "skip deletion" ; fi
-      * use on_mac/on_linux/on_ubuntu/'on_32bit'/'on_64bit' to only run things on certain platforms
+      * use on_mac/on_linux/'on_32bit'/'on_64bit' to only run things on certain platforms
         on_mac && log "Running on MacOS"
       * use folder_prep to create a folder if needed and otherwise clean up old files
         folder_prep "$logd" 7 # delete all files olders than 7 days
       * use run_only_show_errors to run a program and only show the output if there was an error
         run_only_show_errors mv $tmpd/* $outd/
 ### Version history
+* v1.5: fixed last shellcheck warnings - https://github.com/koalaman/shellcheck
 * v1.4: fix md5sum problem, add script authoring tips, automated README creation
 * v1.3: robuster parameter parsing
 * v1.2: better error trap and versioning info

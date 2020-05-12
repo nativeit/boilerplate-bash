@@ -26,13 +26,13 @@ readonly PROGNAME=$(basename "$0" .sh)
 readonly PROGFNAME=$(basename "$0")
 readonly PROGDIRREL=$(dirname "$0")
 if [[ -z "$PROGDIRREL" ]] ; then
-	# script is $PATH somewhere
-	PROGFULLPATH=$(which "$0")
+	# script called without  path specified ; must be in $PATH somewhere
+	readonly PROGFULLPATH=$(which "$0")
 	readonly PROGDIR=$(dirname "$PROGFULLPATH")
 else
 	readonly PROGDIR=$(cd "$PROGDIRREL"; pwd)
+  readonly PROGFULLPATH="$PROGDIR/$PROGFNAME"
 fi
-PROGFULLPATH="$PROGDIR/$PROGFNAME"
 readonly PROGLINES=$(< "$PROGFULLPATH" awk 'END {print NR}')
 readonly PROGHASH=$(< "$PROGFULLPATH" hash)
 readonly PROGUUID="L:${PROGLINES}-MD:${PROGHASH}"
@@ -58,13 +58,15 @@ flag|h|help|show usage
 flag|q|quiet|no output
 flag|v|verbose|output more
 flag|f|force|do not ask for confirmation
-option|l|logd|folder for log files |./log
-option|t|tmpd|folder for temp files|$TEMP/$PROGNAME
+option|l|logd|folder for log files |log
+option|t|tmpd|folder for temp files|.tmp
+#you could also use /tmp/$PROGNAME as the default temp folder
 #option|u|user|username to use|$USERNAME
 #secret|p|pass|password to use
 param|1|action|action to perform: LIST/TEST/...
 # there can only be 1 param|n and it should be the last
-param|n|files|file(s) to perform on
+param|1|output|output file
+param|n|inputs|input files
 " | grep -v '^#'
 }
 
@@ -75,8 +77,6 @@ os_uname=$(uname -s)
 [[ "$os_uname" = "Linux" ]]  && PROGDATE=$(stat -c %y "$0" 2>/dev/null | cut -c1-16) # generic linux
 [[ "$os_uname" = "Darwin" ]] && PROGDATE=$(stat -f "%Sm" "$0" 2>/dev/null) # for MacOS
 
-readonly ARGS="$*"
-#set -e                                  # Exit immediately on error
 verbose=0
 quiet=0
 piped=0
@@ -121,7 +121,7 @@ fi
 
 readonly nbcols=$(tput cols)
 readonly wprogress=$((nbcols - 5))
-readonly nbrows=$(tput lines)
+#readonly nbrows=$(tput lines)
 
 tmpfile=""
 logfile=""
@@ -190,14 +190,8 @@ announce()  { out "${col_grn}${char_wait}${col_reset}  $*"; sleep 1 ; }
 log() { if [[ $verbose -gt 0 ]] ; then
   out "${col_ylw}# $* ${col_reset}"
 fi ;   } # for some reason this always fails if I use ((verbose)) && 
-#TIP: use «log» to information that will only be visible when -v is specified
+#TIP: use «log» to show information that will only be visible when -v is specified
 #TIP:> log "input file: [$inputname] - [$inputsize] MB"
-
-notify()  { if [[ $? == 0 ]] ; then
-        success "$*"
-      else 
-        alert "$*"
-      fi }
 	  
 escape()  { echo "$*" | sed 's/\//\\\//g' ; }
 #TIP: use «escape» to extra escape '/' paths in regex
@@ -208,7 +202,7 @@ ucase()   { echo "$*" | awk '{print toupper($0)}' ; }
 #TIP: use «lcase» and «ucase» to convert to upper/lower case
 #TIP:> param=$(lcase $param)
 
-confirm() { [[ $force -gt 0 ]] && return 0; read -p "$1 [y/N] " -n 1; echo " "; [[ $REPLY =~ ^[Yy]$ ]];}
+confirm() { [[ $force -gt 0 ]] && return 0; read -r -p "$1 [y/N] " -n 1; echo " "; [[ $REPLY =~ ^[Yy]$ ]];}
 #TIP: use «confirm» for interactive confirmation before doing something
 #TIP:> if ! confirm "Delete file"; then ; echo "skip deletion" ;   fi
 
@@ -283,9 +277,23 @@ init_options() {
    fi
 }
 
+run_only_show_errors(){
+  tmpfile=$(mktemp)
+  if ( "$@" ) 2>> "$tmpfile" >> "$tmpfile" ; then
+    #all OK
+    rm "$tmpfile"
+    return 0
+  else
+    alert "[$*] gave an error"
+    cat "$tmpfile"
+    rm "$tmpfile"
+    return 255
+  fi
+}
+
 verify_programs(){
   log "Running: on $os_uname ($os_version)"
-  listprogs=$(echo $*)
+  listprogs="$*"
   listhash=$(echo "$*" | hash)
   okfile="$PROGDIR/.$PROGNAME.$listhash.verified"
   if [[ -f "$okfile" ]] ; then
@@ -436,22 +444,24 @@ parse_options() {
 #####################################################################
 
 ## Put your helper scripts here
-run_only_show_errors(){
-  tmpfile=$(mktemp)
-  if ( "$@" ) 2>> "$tmpfile" >> "$tmpfile" ; then
-    #all OK
-    rm "$tmpfile"
-    return 0
-  else
-    alert "[$*] gave an error"
-    cat "$tmpfile"
-    rm "$tmpfile"
-    return 255
-  fi
-}
 #TIP: use «run_only_show_errors» to run a program and only show the output if there was an error
 #TIP:> run_only_show_errors mv $tmpd/* $outd/
 
+perform_action1(){
+  OUTPUT="$1"
+  shift
+  echo INPUTS = "$*"
+  echo OUTPUT = "$OUTPUT"
+  # < "$1"  do_stuff > "$2"
+}
+
+perform_action2(){
+  OUTPUT="$1"
+  shift
+  echo INPUTS = "$*"
+  echo OUTPUT = "$OUTPUT"
+  # < "$1"  do_stuff > "$2"
+}
 
 ## Put your main script here
 main() {
@@ -476,10 +486,14 @@ main() {
 
     action=$(ucase "$action")
     case $action in
-    TEST )
-        on_mac && success "Running on MacOS"
-        on_linux && success "Running on Linux"
+    ACION1 )
+        #perform_action1 "$output" $inputs
         ;;
+
+    ACTION2 )
+        #perform_action2 "$output" $inputs
+        ;;
+
     *)
         die "param [$action] not recognized"
     esac
