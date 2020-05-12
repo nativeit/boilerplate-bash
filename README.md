@@ -43,21 +43,39 @@
         folder_prep "$logd" 7 # delete all files olders than 7 days
       * use run_only_show_errors to run a program and only show the output if there was an error
         run_only_show_errors mv $tmpd/* $outd/
-### Version history
+
+### VERSION HISTORY
 * v1.5: fixed last shellcheck warnings - https://github.com/koalaman/shellcheck
 * v1.4: fix md5sum problem, add script authoring tips, automated README creation
 * v1.3: robuster parameter parsing
 * v1.2: better error trap and versioning info
 * v1.1: better single and multi param parsing
 * v1.0: first release
-### Examples
+
+### CREATE NEW BASH SCRIPT
+#### Option 1: clone this repo
+	
+        git clone https://github.com/pforret/bash-boilerplate.git
+        cp bash-boilerplate/script.sh my-new-script.sh
+
+#### Option 2: download the script directly
+
+        wget https://raw.githubusercontent.com/pforret/bash-boilerplate/master/script.sh
+        mv script.sh my-new-script.sh
+
+#### Option 3: customize parameters and copy/paste
+	
+	using [toolstud.io/data/bash.php](https://toolstud.io/data/bash.php)
+
+### EXAMPLES
 These scripts were made with some version of [bash-boilerplate](https://github.com/pforret/bash-boilerplate)
 
 * [github.com/pforret/crontask](https://github.com/pforret/crontask)
 * [github.com/pforret/networkcheck](https://github.com/pforret/networkcheck)
 * [github.com/cinemapub/signage_prep](https://github.com/cinemapub/signage_prep)
 * send me your example repos!
-### Acknowledgements
+
+### ACKNOWLEDGEMENTS
 I learned a lot of tips from these sources:
 
 * Daniel Mills, [options.bash](https://github.com/e36freak/tools/blob/master/options.bash)

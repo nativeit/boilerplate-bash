@@ -5,10 +5,19 @@ OUTPUT=README.md
 /^#/	{ print $0 ; next}
 		{ print "      " $0}
 '
-echo "### Version history"
+echo ""
+echo "### VERSION HISTORY"
 cat doc/versions.txt
-echo "### Examples"
+
+echo ""
+echo "### CREATE NEW BASH SCRIPT"
+cat doc/install.txt
+
+echo ""
+echo "### EXAMPLES"
 cat doc/examples.txt
-echo "### Acknowledgements"
+
+echo ""
+echo "### ACKNOWLEDGEMENTS"
 cat doc/inspiration.txt
 ) > $OUTPUT
