@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# check for CI error handling
+echo `check CI error handling`
+
 ### ==============================================================================
 ### SO HOW DO YOU PROCEED WITH YOUR SCRIPT?
 ### 1. run "script.sh init"

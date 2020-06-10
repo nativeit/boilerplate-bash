@@ -34,10 +34,11 @@ Just use one of 4 methods to generate a new script, that has all the functionali
 
 becomes
 
+      
 ### USAGE
       Program: script.sh by @email
-      Version: @version (L:557-MD:da2c69)
-      Updated: 2020-06-10 22:38
+      Version: @version (L:560-MD:b33f4e)
+      Updated: 2020-06-10 23:28
       Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
       Flags, options and parameters:
           -h|--help      : [flag] show usage [default: off]
