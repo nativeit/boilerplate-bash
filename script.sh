@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+### ==============================================================================
+### SO HOW DO YOU PROCEED WITH YOUR SCRIPT?
+### 1. rename <script.sh> ro the name you want
+### 2. define the options/parameters and defaults you need in list_options() 
+### 3. define functions your might need by changing/adding to perform_action1()
+### 4. add binaries your script needs (e.g. ffmpeg) to verify_programs awk (...) wc
+### 5. implement the different actions you defined in 2. in main()
+### ==============================================================================
+
 # uncomment next line to have time prefix for every output line
 #prefix_fmt='+%H:%M:%S | '
 prefix_fmt=""
@@ -43,17 +52,17 @@ readonly TODAY=$(date "+%Y-%m-%d")
 readonly PROGIDEN="«${PROGNAME} ${PROGVERS}»"
 [[ -z "${TEMP:-}" ]] && TEMP=/tmp
 
-### Change the next lines to reflect which flags/options/parameters you need
-### flag:   switch a flag 'on' / no extra parameter / e.g. "-v" for verbose
-### flag|<short>|<long>|<description>|<default>
-### option: set an option value / 1 extra parameter / e.g. "-l error.log" for logging to file
-### option|<short>|<long>|<description>|<default>
-### param:  comes after the options
-### param|<type>|<long>|<description>
-### where <type> = 1 for single parameters or <type> = n for (last) parameter that can be a list
-
 list_options() {
+  ### Change the next lines to reflect which flags/options/parameters you need
+  ### flag:   switch a flag 'on' / no extra parameter / e.g. "-v" for verbose
+  ### flag|<short>|<long>|<description>|<default>
+  ### option: set an option value / 1 extra parameter / e.g. "-l error.log" for logging to file
+  ### option|<short>|<long>|<description>|<default>
+  ### param:  comes after the options
+  ### param|<type>|<long>|<description>
+  ### where <type> = 1 for single parameters or <type> = n for (last) parameter that can be a list
 echo -n "
+#commented lines will be filtered
 flag|h|help|show usage
 flag|q|quiet|no output
 flag|v|verbose|output more

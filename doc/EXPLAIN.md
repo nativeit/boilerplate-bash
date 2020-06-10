@@ -6,13 +6,14 @@ It's like a mini console framework for bash shell scripting.
 
 Just use one of 4 methods to generate a new script, that has all the functionality to 
 
-0. 1 self-contained file, no external depedencies
-1. parse options and parameters 
-2. generate clean usage 
-3. run in silent/quiet or verbose mode
-4. create and clean up temporary folder/files
-5. better error reporting
-6. Bash CI (Github Actions)
+1.	one self-contained file, no external dependencies
+2.	parse options and parameters 
+3.	generate clean usage 
+4.	run in silent/quiet or verbose mode
+5.	create and clean up temporary folder/files
+6.	better error reporting
+7.	Bash CI (Github Actions)
+
 
 		flag|h|help|show usage
 		flag|q|quiet|no output
@@ -20,9 +21,6 @@ Just use one of 4 methods to generate a new script, that has all the functionali
 		flag|f|force|do not ask for confirmation
 		option|l|logd|folder for log files |log
 		option|t|tmpd|folder for temp files|.tmp
-		#you could also use /tmp/$PROGNAME as the default temp folder
-		#option|u|user|username to use|$USERNAME
-		#secret|p|pass|password to use
 		param|1|action|action to perform: LIST/TEST/...
 		param|1|output|output file
 		# there can only be 1 param|n and it should be the last
