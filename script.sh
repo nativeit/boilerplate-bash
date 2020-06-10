@@ -36,7 +36,7 @@ fi
 readonly PROGLINES=$(< "$PROGFULLPATH" awk 'END {print NR}')
 readonly PROGHASH=$(< "$PROGFULLPATH" hash)
 readonly PROGUUID="L:${PROGLINES}-MD:${PROGHASH}"
-readonly PROGVERS="v1.5"
+readonly PROGVERS="v1.6.0"
 readonly PROGAUTH="peter@forret.com"
 readonly USERNAME=$(whoami)
 readonly TODAY=$(date "+%Y-%m-%d")

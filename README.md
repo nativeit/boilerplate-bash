@@ -1,7 +1,7 @@
 ### USAGE
       Program: script.sh by peter@forret.com
-      Version: v1.5 (L:511-MD:cf9be6)
-      Updated: May 12 19:51:10 2020
+      Version: v1.6.0 (L:511-MD:758253)
+      Updated: 2020-06-10 15:03
       Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
       Flags, options and parameters:
           -h|--help      : [flag] show usage [default: off]
