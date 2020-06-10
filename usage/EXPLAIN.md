@@ -1,5 +1,5 @@
 ![Bash CI](https://github.com/pforret/bash-boilerplate/workflows/Bash%20CI/badge.svg) 
-![Shellcheck](https://github.com/pforret/bash-boilerplate/workflows/Shellcheck/badge.svg)
+![Shellcheck CI](https://github.com/pforret/bash-boilerplate/workflows/Shellcheck%20CI/badge.svg)
 ![version](https://img.shields.io/github/v/release/pforret/bash-boilerplate?include_prereleases)
 ![activity](https://img.shields.io/github/commit-activity/m/pforret/bash-boilerplate)
 ![license](https://img.shields.io/github/license/pforret/bash-boilerplate)
@@ -19,7 +19,6 @@ Just use one of 4 methods to generate a new script, that has all the functionali
 6.	better error reporting
 7.	Bash CI (Github Actions)
 8.	self-initialisation for new scripts (`script.sh init`)
-
 
 		flag|h|help|show usage
 		flag|q|quiet|no output
