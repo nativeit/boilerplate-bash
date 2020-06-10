@@ -1,23 +1,18 @@
+#!/bin/bash
+SCRIPT=./script.sh
 OUTPUT=README.md
 
 (
-./script.sh --help | awk '
-/^#/	{ print $0 ; next}
-		{ print "      " $0}
-'
-echo ""
-echo "### VERSION HISTORY"
-cat doc/versions.txt
+	cat doc/EXPLAIN.md
 
-echo ""
-echo "### CREATE NEW BASH SCRIPT"
-cat doc/install.txt
+	$SCRIPT --help | awk '
+		/^#/	{ print $0 ; next}
+				{ print "      " $0}
+		'
 
-echo ""
-echo "### EXAMPLES"
-cat doc/examples.txt
-
-echo ""
-echo "### ACKNOWLEDGEMENTS"
-cat doc/inspiration.txt
+	cat doc/CHANGELOG.md
+	cat doc/INSTALL.md
+	cat doc/EXAMPLES.md
+	cat doc/INSPIRATION.md
 ) > $OUTPUT
+cp $OUTPUT docs/index.md
