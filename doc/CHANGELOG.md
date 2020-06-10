@@ -1,3 +1,4 @@
+
 ### VERSION HISTORY
 
 * v1.6: introduce semver versioning, Bash CI

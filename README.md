@@ -28,23 +28,10 @@ Just use one of 4 methods to generate a new script, that has all the functionali
 
 becomes
 
-      Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
-      Flags, options and parameters:
-          -h|--help      : [flag] show usage [default: off]
-          -q|--quiet     : [flag] no output [default: off]
-          -v|--verbose   : [flag] output more [default: off]
-          -f|--force     : [flag] do not ask for confirmation [default: off]
-          -l|--logd <val>: [optn] folder for log files   [default: log]
-          -t|--tmpd <val>: [optn] folder for temp files  [default: .tmp]
-          <action>  : [parameter] action to perform: LIST/TEST/...
-          <output>  : [parameter] output file
-          <inputs>  : [parameters] input files (1 or more)
-
-
 ### USAGE
       Program: script.sh by peter@forret.com
-      Version: v1.6.0 (L:511-MD:758253)
-      Updated: 2020-06-10 16:00
+      Version: v1.6.1 (L:511-MD:4d9a6b)
+      Updated: 2020-06-10 16:29
       Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
       Flags, options and parameters:
           -h|--help      : [flag] show usage [default: off]
@@ -86,6 +73,7 @@ becomes
         folder_prep "$logd" 7 # delete all files olders than 7 days
       * use run_only_show_errors to run a program and only show the output if there was an error
         run_only_show_errors mv $tmpd/* $outd/
+
 ### VERSION HISTORY
 
 * v1.6: introduce semver versioning, Bash CI

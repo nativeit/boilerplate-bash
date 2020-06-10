@@ -36,7 +36,7 @@ fi
 readonly PROGLINES=$(< "$PROGFULLPATH" awk 'END {print NR}')
 readonly PROGHASH=$(< "$PROGFULLPATH" hash)
 readonly PROGUUID="L:${PROGLINES}-MD:${PROGHASH}"
-readonly PROGVERS="v1.6.0"
+readonly PROGVERS="v1.6.1"
 readonly PROGAUTH="peter@forret.com"
 readonly USERNAME=$(whoami)
 readonly TODAY=$(date "+%Y-%m-%d")
@@ -161,14 +161,14 @@ safe_exit() {
   exit
 }
 
-is_set()       { local target=$1 ; [[ $target -gt 0 ]] ; }
-is_empty()     { local target=$1 ; [[ -z $target ]] ; }
-is_not_empty() { local target=$1;  [[ -n $target ]] ; }
+is_set()       { [[ "$1" -gt 0 ]] ; }
+is_empty()     { [[ -z "$1" ]] ; }
+is_not_empty() { [[ -n "$1" ]] ; }
 #TIP: use «is_empty» and «is_not_empty» to test for variables
 #TIP:> if ! confirm "Delete file"; then ; echo "skip deletion" ;   fi
 
-is_file() { local target=$1; [[ -f $target ]] ; }
-is_dir()  { local target=$1; [[ -d $target ]] ; }
+is_file() { [[ -f "$1" ]] ; }
+is_dir()  { [[ -d "$1" ]] ; }
 
 die()     { out "${col_red}${char_fail} $PROGIDEN${col_reset}: $*" >&2; safe_exit; }
 fail()    { out "${col_red}${char_fail} $PROGIDEN${col_reset}: $*" >&2; safe_exit; }

@@ -28,16 +28,3 @@ Just use one of 4 methods to generate a new script, that has all the functionali
 
 becomes
 
-      Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
-      Flags, options and parameters:
-          -h|--help      : [flag] show usage [default: off]
-          -q|--quiet     : [flag] no output [default: off]
-          -v|--verbose   : [flag] output more [default: off]
-          -f|--force     : [flag] do not ask for confirmation [default: off]
-          -l|--logd <val>: [optn] folder for log files   [default: log]
-          -t|--tmpd <val>: [optn] folder for temp files  [default: .tmp]
-          <action>  : [parameter] action to perform: LIST/TEST/...
-          <output>  : [parameter] output file
-          <inputs>  : [parameters] input files (1 or more)
-
-
