@@ -223,7 +223,7 @@ ask() {
   # $2 = question
   # $3 = default value  
   printf "%s%s%s ", "$col_ylw", "$2", "${col_reset}"
-  read -e -p " " -i "$3" "$1"
+  read -r -e -p " " -i "$3" "$1"
 }
 #TIP: use «ask» for interactive setting of variables
 #TIP:> ask NAME "What is your name" "Peter"
