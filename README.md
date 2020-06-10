@@ -1,4 +1,5 @@
-![Bash CI](https://github.com/pforret/bash-boilerplate/workflows/Bash%20CI/badge.svg)
+![Bash CI](https://github.com/pforret/bash-boilerplate/workflows/Bash%20CI/badge.svg) 
+![Shellcheck](https://github.com/pforret/bash-boilerplate/workflows/Shellcheck/badge.svg)
 
 ### BASH BOILERPLATE
 
@@ -30,8 +31,8 @@ becomes
 
 ### USAGE
       Program: script.sh by peter@forret.com
-      Version: v1.6.1 (L:520-MD:3a87ab)
-      Updated: 2020-06-10 17:03
+      Version: v1.6.1 (L:521-MD:2d6fe5)
+      Updated: 2020-06-10 18:54
       Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
       Flags, options and parameters:
           -h|--help      : [flag] show usage [default: off]
@@ -84,7 +85,7 @@ becomes
 * v1.1: better single and multi param parsing
 * v1.0: first release
 
-### CREATE NEW BASH SCRIPT
+ ### CREATE NEW BASH SCRIPT
 
 #### Option 1: clone this repo
 	

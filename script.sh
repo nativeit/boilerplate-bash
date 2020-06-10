@@ -45,6 +45,7 @@ fi
 readonly PROGLINES=$(< "$PROGFULLPATH" awk 'END {print NR}')
 readonly PROGHASH=$(< "$PROGFULLPATH" hash)
 readonly PROGUUID="L:${PROGLINES}-MD:${PROGHASH}"
+# this is version of bash-boilerplate - replace by versioning of your script; start at 1.0.0
 readonly PROGVERS="v1.6.1"
 readonly PROGAUTH="peter@forret.com"
 readonly USERNAME=$(whoami)

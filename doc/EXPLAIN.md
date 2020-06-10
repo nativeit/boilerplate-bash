@@ -1,4 +1,5 @@
-![Bash CI](https://github.com/pforret/bash-boilerplate/workflows/Bash%20CI/badge.svg)
+![Bash CI](https://github.com/pforret/bash-boilerplate/workflows/Bash%20CI/badge.svg) 
+![Shellcheck](https://github.com/pforret/bash-boilerplate/workflows/Shellcheck/badge.svg)
 
 ### BASH BOILERPLATE
 
