@@ -1,3 +1,5 @@
+![Bash CI](https://github.com/pforret/bash-boilerplate/workflows/Bash%20CI/badge.svg)
+
 ### USAGE
       Program: script.sh by peter@forret.com
       Version: v1.5 (L:511-MD:cf9be6)
@@ -66,6 +68,11 @@
 #### Option 3: customize parameters and copy/paste
 	
 	using [toolstud.io/data/bash.php](https://toolstud.io/data/bash.php)
+
+#### Option 4: create new Gihub repo from template
+	
+	from [pforret/bash-boilerplate](https://github.com/pforret/bash-boilerplate)
+	press "Use this template"
 
 ### EXAMPLES
 These scripts were made with some version of [bash-boilerplate](https://github.com/pforret/bash-boilerplate)
