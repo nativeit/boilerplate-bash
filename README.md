@@ -15,6 +15,7 @@ Just use one of 4 methods to generate a new script, that has all the functionali
 5.	create and clean up temporary folder/files
 6.	better error reporting
 7.	Bash CI (Github Actions)
+8.	self-initialisation for new scripts (`script.sh init`)
 
 
 		flag|h|help|show usage
@@ -31,9 +32,9 @@ Just use one of 4 methods to generate a new script, that has all the functionali
 becomes
 
 ### USAGE
-      Program: script.sh by peter@forret.com
-      Version: v1.6.1 (L:521-MD:2d6fe5)
-      Updated: 2020-06-10 18:54
+      Program: script.sh by @email
+      Version: @version (L:557-MD:f37821)
+      Updated: 2020-06-10 22:17
       Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
       Flags, options and parameters:
           -h|--help      : [flag] show usage [default: off]
@@ -42,13 +43,13 @@ becomes
           -f|--force     : [flag] do not ask for confirmation [default: off]
           -l|--logd <val>: [optn] folder for log files   [default: log]
           -t|--tmpd <val>: [optn] folder for temp files  [default: .tmp]
-          <action>  : [parameter] action to perform: LIST/TEST/...
+          <action>  : [parameter] action to perform: init/list/test/...
           <output>  : [parameter] output file
           <inputs>  : [parameters] input files (1 or more)
       
 ### SCRIPT AUTHORING TIPS
       * use out to show any kind of output, except when option --quiet is specified
-        out "User is [$USERNAME]"
+        out "User is [$USER]"
       * use progress to show one line of progress that will be overwritten by the next output
         progress "Now generating file $nb of $total ..."
       * use is_empty and is_not_empty to test for variables
@@ -69,6 +70,8 @@ becomes
         param=$(lcase $param)
       * use confirm for interactive confirmation before doing something
         if ! confirm "Delete file"; then ; echo "skip deletion" ; fi
+      * use ask for interactive setting of variables
+        ask NAME "What is your name" "Peter"
       * use on_mac/on_linux/'on_32bit'/'on_64bit' to only run things on certain platforms
         on_mac && log "Running on MacOS"
       * use folder_prep to create a folder if needed and otherwise clean up old files
