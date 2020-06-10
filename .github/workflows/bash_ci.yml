@@ -14,5 +14,5 @@ jobs:
     - uses: actions/checkout@v2
 
     # Runs a single command using the runners shell
-    - name: Run the script
-      run: for SCRIPT in *.sh ; do ; bash $SCRIPT ; done
+    - name: Run all shell scripts
+      run: for SCRIPT in *.sh ; do ( echo "##### $SCRIPT" ; bash $SCRIPT) ; done
