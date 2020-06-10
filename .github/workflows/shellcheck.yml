@@ -12,6 +12,5 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Run a multi-line script
-      run: |
-        ls ./*.sh | xargs shellcheck
+    - name: Check for code quality errors
+      run: ls ./*.sh | xargs shellcheck

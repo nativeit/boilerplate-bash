@@ -10,9 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
-    # Runs a single command using the runners shell
-    - name: Run all shell scripts
-      run: for SCRIPT in *.sh ; do ( echo "##### $SCRIPT" ; bash $SCRIPT) ; done
+    - name: Check for execution errors
+      run: ls ./*.sh | xargs bash
