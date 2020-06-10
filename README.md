@@ -1,6 +1,5 @@
 ![Bash CI](https://github.com/pforret/bash-boilerplate/workflows/Bash%20CI/badge.svg) 
 ![Shellcheck](https://github.com/pforret/bash-boilerplate/workflows/Shellcheck/badge.svg)
-![Shellcheck2](workflows/Shellcheck/badge.svg)
 
 ### BASH BOILERPLATE
 
@@ -33,8 +32,8 @@ becomes
 
 ### USAGE
       Program: script.sh by @email
-      Version: @version (L:557-MD:f37821)
-      Updated: 2020-06-10 22:17
+      Version: @version (L:557-MD:dd5b90)
+      Updated: 2020-06-10 22:26
       Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
       Flags, options and parameters:
           -h|--help      : [flag] show usage [default: off]

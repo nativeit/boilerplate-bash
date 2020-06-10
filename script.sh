@@ -222,8 +222,8 @@ ask() {
   # $1 = variable name
   # $2 = question
   # $3 = default value  
-  printf "${col_ylw}$2${col_reset} "
-  read -e -p " " -i "$3" $1
+  printf "%s%s%s ", "$col_ylw", "$2", "${col_reset}"
+  read -e -p " " -i "$3" "$1"
 }
 #TIP: use «ask» for interactive setting of variables
 #TIP:> ask NAME "What is your name" "Peter"
@@ -526,8 +526,8 @@ main() {
           < "$PROGFULLPATH" awk -v email="$EMAIL" -v version="$VERSION" '{gsub(/@version/,version); gsub(/@email/,email); print$0}' > "$NEWNAME"
           if [[ -d $PROGDIR/usage ]] ; then
             if confirm "Delete all non-relevant files? "; then
-              echo rm -fr $PROGDIR/usage
-              echo rm -fr $PROGDIR/docs
+              rm -fr "$PROGDIR/usage"
+              rm -fr "$PROGDIR/docs"
             fi
           fi
         else
