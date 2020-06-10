@@ -3,6 +3,7 @@
 SCRIPT=./script.sh
 OUTPUT=./README.md
 FOLDER=./usage
+echo OUTPUT = $OUTPUT
 (
 	cat $FOLDER/EXPLAIN.md
 
@@ -18,4 +19,5 @@ FOLDER=./usage
 ) > $OUTPUT
 
 # copy to website homepage
+echo OUTPUT = docs/index.md
 cp $OUTPUT docs/index.md

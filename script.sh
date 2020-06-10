@@ -2,12 +2,39 @@
 
 ### ==============================================================================
 ### SO HOW DO YOU PROCEED WITH YOUR SCRIPT?
-### 1. rename <script.sh> ro the name you want
+### 1. run "script.sh init"
 ### 2. define the options/parameters and defaults you need in list_options() 
 ### 3. define functions your might need by changing/adding to perform_action1()
 ### 4. add binaries your script needs (e.g. ffmpeg) to verify_programs awk (...) wc
 ### 5. implement the different actions you defined in 2. in main()
 ### ==============================================================================
+
+list_options() {
+  ### Change the next lines to reflect which flags/options/parameters you need
+  ### flag:   switch a flag 'on' / no extra parameter / e.g. "-v" for verbose
+  ### flag|<short>|<long>|<description>|<default>
+  ### option: set an option value / 1 extra parameter / e.g. "-l error.log" for logging to file
+  ### option|<short>|<long>|<description>|<default>
+  ### param:  comes after the options
+  ### param|<type>|<long>|<description>
+  ### where <type> = 1 for single parameters or <type> = n for (last) parameter that can be a list
+echo -n "
+#commented lines will be filtered
+flag|h|help|show usage
+flag|q|quiet|no output
+flag|v|verbose|output more
+flag|f|force|do not ask for confirmation
+option|l|logd|folder for log files |log
+option|t|tmpd|folder for temp files|.tmp
+#you could also use /tmp/$PROGNAME as the default temp folder
+#option|u|user|USER to use|$USER
+#secret|p|pass|password to use
+param|1|action|action to perform: init/list/test/...
+# there can only be 1 param|n and it should be the last
+param|1|output|output file
+param|n|inputs|input files
+" | grep -v '^#'
+}
 
 # uncomment next line to have time prefix for every output line
 #prefix_fmt='+%H:%M:%S | '
@@ -16,6 +43,8 @@ runasroot=-1
 # runasroot = 0 :: don't check anything
 # runasroot = 1 :: script MUST run as root
 # runasroot = -1 :: script MAY NOT run as root
+#####################################################################
+################### DO NOT MODIFY BELOW THIS LINE ###################
 
 # set strict mode -  via http://redsymbol.net/articles/unofficial-bash-strict-mode/
 set -euo pipefail
@@ -46,42 +75,12 @@ readonly PROGLINES=$(< "$PROGFULLPATH" awk 'END {print NR}')
 readonly PROGHASH=$(< "$PROGFULLPATH" hash)
 readonly PROGUUID="L:${PROGLINES}-MD:${PROGHASH}"
 # this is version of bash-boilerplate - replace by versioning of your script; start at 1.0.0
-readonly PROGVERS="v1.6.1"
-readonly PROGAUTH="peter@forret.com"
-readonly USERNAME=$(whoami)
+readonly PROGVERS="@version"
+readonly PROGAUTH="@email"
 readonly TODAY=$(date "+%Y-%m-%d")
 readonly PROGIDEN="«${PROGNAME} ${PROGVERS}»"
 [[ -z "${TEMP:-}" ]] && TEMP=/tmp
 
-list_options() {
-  ### Change the next lines to reflect which flags/options/parameters you need
-  ### flag:   switch a flag 'on' / no extra parameter / e.g. "-v" for verbose
-  ### flag|<short>|<long>|<description>|<default>
-  ### option: set an option value / 1 extra parameter / e.g. "-l error.log" for logging to file
-  ### option|<short>|<long>|<description>|<default>
-  ### param:  comes after the options
-  ### param|<type>|<long>|<description>
-  ### where <type> = 1 for single parameters or <type> = n for (last) parameter that can be a list
-echo -n "
-#commented lines will be filtered
-flag|h|help|show usage
-flag|q|quiet|no output
-flag|v|verbose|output more
-flag|f|force|do not ask for confirmation
-option|l|logd|folder for log files |log
-option|t|tmpd|folder for temp files|.tmp
-#you could also use /tmp/$PROGNAME as the default temp folder
-#option|u|user|username to use|$USERNAME
-#secret|p|pass|password to use
-param|1|action|action to perform: LIST/TEST/...
-# there can only be 1 param|n and it should be the last
-param|1|output|output file
-param|n|inputs|input files
-" | grep -v '^#'
-}
-
-#####################################################################
-################### DO NOT MODIFY BELOW THIS LINE ###################
 PROGDATE="??"
 os_uname=$(uname -s)
 [[ "$os_uname" = "Linux" ]]  && PROGDATE=$(stat -c %y "$0" 2>/dev/null | cut -c1-16) # generic linux
@@ -146,7 +145,7 @@ out() {
   printf '%b\n' "$prefix$message";
 }
 #TIP: use «out» to show any kind of output, except when option --quiet is specified
-#TIP:> out "User is [$USERNAME]"
+#TIP:> out "User is [$USER]"
 
 progress() {
   ((quiet)) && return
@@ -199,7 +198,10 @@ announce()  { out "${col_grn}${char_wait}${col_reset}  $*"; sleep 1 ; }
 
 log() { if [[ $verbose -gt 0 ]] ; then
   out "${col_ylw}# $* ${col_reset}"
-fi ;   } # for some reason this always fails if I use ((verbose)) && 
+fi ;   }
+debug() { if [[ $verbose -gt 0 ]] ; then
+  out "${col_ylw}# $* ${col_reset}"
+fi ;   }
 #TIP: use «log» to show information that will only be visible when -v is specified
 #TIP:> log "input file: [$inputname] - [$inputsize] MB"
 	  
@@ -215,6 +217,17 @@ ucase()   { echo "$*" | awk '{print toupper($0)}' ; }
 confirm() { [[ $force -gt 0 ]] && return 0; read -r -p "$1 [y/N] " -n 1; echo " "; [[ $REPLY =~ ^[Yy]$ ]];}
 #TIP: use «confirm» for interactive confirmation before doing something
 #TIP:> if ! confirm "Delete file"; then ; echo "skip deletion" ;   fi
+
+ask() { 
+  # $1 = variable name
+  # $2 = question
+  # $3 = default value  
+  printf "${col_ylw}$2${col_reset} "
+  read -e -p " " -i "$3" $1
+}
+#TIP: use «ask» for interactive setting of variables
+#TIP:> ask NAME "What is your name" "Peter"
+
 
 os_uname=$(uname -s)
 os_bits=$(uname -m)
@@ -405,6 +418,11 @@ parse_options() {
       safe_exit
     fi
 
+    # special case: init
+    if [[ "$1" == "init" ]] || [[ "$1" == "INIT" ]] ; then
+      action=init
+      return
+    fi
     ## then run through the given parameters
   if expects_single_params ; then
     #log "Process: single params"
@@ -412,7 +430,8 @@ parse_options() {
     nb_singles=$(echo "$single_params" | wc -w)
     log "Expect : $nb_singles single parameter(s): $single_params"
     [[ $# -eq 0 ]] && die "need the parameter(s) [$single_params]"
-    
+
+
     for param in $single_params ; do
       [[ $# -eq 0 ]] && die "need parameter [$param]"
       [[ -z "$1" ]]  && die "need parameter [$param]"
@@ -477,7 +496,7 @@ perform_action2(){
 main() {
     log "Program: $PROGFNAME $PROGVERS ($PROGUUID)"
     log "Updated: $PROGDATE"
-    log "Run as : $USERNAME@$HOSTNAME"
+    log "Run as : $USER@$HOSTNAME"
     if [[ -n "$tmpd" ]] ; then
       folder_prep "$tmpd" 1
       tmpfile=$(mktemp "$tmpd/$TODAY.XXXXXX.tmp")
@@ -494,13 +513,30 @@ main() {
     verify_programs awk curl cut date echo find grep head printf sed stat tail uname wc
     # add programs you need in your script here, like tar, wget, ...
 
-    action=$(ucase "$action")
+    action=$(lcase "$action")
     case $action in
-    ACION1 )
-        #perform_action1 "$output" $inputs
+    init )
+        # used as first run of the script: delete what is not necessary
+        out "## SCRIPT INITIALISATION"
+        if [[ "@email" == @* ]] ; then
+          out "let's create a new project and remove everything you don't need!"
+          ask EMAIL "What is your email address?" "$USER@$HOSTNAME"
+          ask NEWNAME "What is the name of your script?" "newscript.sh"
+          ask VERSION "What is the version of your script?" "1.0.0"
+          < "$PROGFULLPATH" awk -v email="$EMAIL" -v version="$VERSION" '{gsub(/@version/,version); gsub(/@email/,email); print$0}' > "$NEWNAME"
+          if [[ -d $PROGDIR/usage ]] ; then
+            if confirm "Delete all non-relevant files? "; then
+              echo rm -fr $PROGDIR/usage
+              echo rm -fr $PROGDIR/docs
+            fi
+          fi
+        else
+          die "This is no longer a template script, it was already initialised by @email - please start from original script.sh"
+        fi
+
         ;;
 
-    ACTION2 )
+    action2 )
         #perform_action2 "$output" $inputs
         ;;
 

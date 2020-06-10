@@ -15,6 +15,7 @@ Just use one of 4 methods to generate a new script, that has all the functionali
 5.	create and clean up temporary folder/files
 6.	better error reporting
 7.	Bash CI (Github Actions)
+8.	self-initialisation for new scripts (`script.sh init`)
 
 
 		flag|h|help|show usage
