@@ -1,7 +1,7 @@
 ![Bash CI](https://github.com/pforret/bash-boilerplate/workflows/Bash%20CI/badge.svg) 
 ![Shellcheck](https://github.com/pforret/bash-boilerplate/workflows/Shellcheck/badge.svg)
 ![version](https://img.shields.io/github/v/release/pforret/bash-boilerplate?include_prereleases)
-![activity](https://img.shields.io/github/commit-activity/y/pforret/bash-boilerplate)
+![activity](https://img.shields.io/github/commit-activity/m/pforret/bash-boilerplate)
 ![license](https://img.shields.io/github/license/pforret/bash-boilerplate)
 ![repo size](https://img.shields.io/github/repo-size/pforret/bash-boilerplate)
 
@@ -101,8 +101,7 @@ becomes
 
 #### Option 2: create new Github repo from template
 	
-	from [pforret/bash-boilerplate](https://github.com/pforret/bash-boilerplate)
-	press "Use this template"
+go to https://github.com/pforret/bash-boilerplate - press "Use this template"
 
 #### Option 3: download the script directly
 
@@ -111,7 +110,7 @@ becomes
 
 #### Option 4: customize parameters and copy/paste
 	
-	using [toolstud.io/data/bash.php](https://toolstud.io/data/bash.php)
+go to [toolstud.io/data/bash.php](https://toolstud.io/data/bash.php)
 
 ### EXAMPLES
 

@@ -7,8 +7,7 @@
 
 #### Option 2: create new Github repo from template
 	
-	from [pforret/bash-boilerplate](https://github.com/pforret/bash-boilerplate)
-	press "Use this template"
+go to https://github.com/pforret/bash-boilerplate - press "Use this template"
 
 #### Option 3: download the script directly
 
@@ -17,5 +16,5 @@
 
 #### Option 4: customize parameters and copy/paste
 	
-	using [toolstud.io/data/bash.php](https://toolstud.io/data/bash.php)
+go to [toolstud.io/data/bash.php](https://toolstud.io/data/bash.php)
 

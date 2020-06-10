@@ -1,7 +1,7 @@
 ![Bash CI](https://github.com/pforret/bash-boilerplate/workflows/Bash%20CI/badge.svg) 
 ![Shellcheck](https://github.com/pforret/bash-boilerplate/workflows/Shellcheck/badge.svg)
 ![version](https://img.shields.io/github/v/release/pforret/bash-boilerplate?include_prereleases)
-![activity](https://img.shields.io/github/commit-activity/y/pforret/bash-boilerplate)
+![activity](https://img.shields.io/github/commit-activity/m/pforret/bash-boilerplate)
 ![license](https://img.shields.io/github/license/pforret/bash-boilerplate)
 ![repo size](https://img.shields.io/github/repo-size/pforret/bash-boilerplate)
 
