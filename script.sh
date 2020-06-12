@@ -51,7 +51,7 @@ runasroot=-1
 ################### DO NOT MODIFY BELOW THIS LINE ###################
 
 # set strict mode -  via http://redsymbol.net/articles/unofficial-bash-strict-mode/
-# removed -e because it made basic testing difficult
+# removed -e because it made basic [[ testing ]] difficult
 set -uo pipefail
 IFS=$'\n\t'
 hash(){
@@ -73,7 +73,7 @@ if [[ -z "$PROGDIRREL" ]] ; then
   readonly PROGFULLPATH=$(which "$0")
   readonly PROGDIR=$(dirname "$PROGFULLPATH")
 else
-  readonly PROGDIR=$(cd "$PROGDIRREL"; pwd)
+  readonly PROGDIR=$(cd "$PROGDIRREL" && pwd)
   readonly PROGFULLPATH="$PROGDIR/$PROGFNAME"
 fi
 readonly PROGLINES=$(< "$PROGFULLPATH" awk 'END {print NR}')
@@ -166,9 +166,9 @@ progress() {
 
 error_prefix="${col_red}>${col_reset}"
 trap "die \"ERROR \$? after \$SECONDS seconds \n\
-${error_prefix} last command : '\$BASH_COMMAND' \" \
-\$(< $PROGFULLPATH awk -v lineno=\$LINENO \
-'NR == lineno {print \"${error_prefix} from line \" lineno \" : \" \$0}')" INT TERM EXIT
+\${error_prefix} last command : '\$BASH_COMMAND' \" \
+\$(< \$PROGFULLPATH awk -v lineno=\$LINENO \
+'NR == lineno {print \"\${error_prefix} from line \" lineno \" : \" \$0}')" INT TERM EXIT
 # cf https://askubuntu.com/questions/513932/what-is-the-bash-command-variable-good-for
 # trap 'echo ‘$BASH_COMMAND’ failed with error code $?' ERR
 safe_exit() { 
@@ -329,9 +329,9 @@ verify_programs(){
   hash_programs=$(echo "$*" | hash)
   verify_cache="$PROGDIR/.$PROGNAME.$hash_programs.verified"
   if [[ -f "$verify_cache" ]] ; then
-    log "Verify : $(echo $*) (cached)"
+    log "Verify : $* (cached)"
   else 
-    log "Verify : $(echo $*)"
+    log "Verify : $*"
     programs_ok=1
     for prog in "$@" ; do
       if [[ -z $(which "$prog") ]] ; then
@@ -429,11 +429,11 @@ parse_options() {
 
     # special case: init
     if [[ $(lcase "$1") == "init" ]] ; then
-      action=init
+      action="init"
       return
     fi
     if [[ $(lcase "$1") == "test" ]] ; then
-      action=test
+      action="test"
       return
     fi
     ## then run through the given parameters
@@ -508,7 +508,7 @@ create_script_from_template(){
 
 run_tests(){
     # just show all options/params with values
-    local show_commands=$(list_options \
+  show_commands=$(list_options \
     | awk '
     BEGIN { FS="|"; OFS=" ";}
     $1 ~ /flag|option/ {print "out \"-" $2 "/--" $3 " = $" $3 " (" $1 ")\""}
@@ -557,7 +557,7 @@ main() {
       log "Logfile: $logfile"
       echo "$(date '+%H:%M:%S') | [$PROGFNAME] $PROGVERS ($PROGUUID) started" >> "$logfile"
     fi
-    verify_programs awk curl cut date echo find grep head printf sed stat tail uname wc
+    verify_programs "awk curl cut date echo find grep head printf sed stat tail uname wc"
     # add programs you need in your script here, like tar, wget, ...
 
     action=$(lcase "$action")
