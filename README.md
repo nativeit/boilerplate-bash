@@ -35,14 +35,14 @@ becomes
 
 ### USAGE
       Program: script.sh by @email
-      Version: @version (L:556-MD:3a885d)
-      Updated: 2020-06-10 23:32
+      Version: @version (L:594-MD:273a4c)
+      Updated: Jun 12 12:08:34 2020
       Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
       Flags, options and parameters:
           -h|--help      : [flag] show usage [default: off]
           -q|--quiet     : [flag] no output [default: off]
           -v|--verbose   : [flag] output more [default: off]
-          -f|--force     : [flag] do not ask for confirmation [default: off]
+          -f|--force     : [flag] do not ask for confirmation (always yes) [default: off]
           -l|--logd <val>: [optn] folder for log files   [default: log]
           -t|--tmpd <val>: [optn] folder for temp files  [default: .tmp]
           <action>  : [parameter] action to perform: init/list/test/...
@@ -78,8 +78,6 @@ becomes
         on_mac && log "Running on MacOS"
       * use folder_prep to create a folder if needed and otherwise clean up old files
         folder_prep "$logd" 7 # delete all files olders than 7 days
-      * use run_only_show_errors to run a program and only show the output if there was an error
-        run_only_show_errors mv $tmpd/* $outd/
 
 ### VERSION HISTORY
 
@@ -124,7 +122,7 @@ These scripts were made with some version of [bash-boilerplate](https://github.c
 
 I learned a lot of tips from these sources:
 
-* Daniel Mills, [options.bash](https://github.com/e36freak/tools/blob/master/options.bash)
-* DJ Mills [github.com/e36freak](https://github.com/e36freak)
+* Daniel Mills, [e36freak](https://github.com/e36freak)
 * Kfir Lavi [www.kfirlavi.com](http://www.kfirlavi.com/blog/2012/11/14/defensive-bash-programming)
-
+* Aaron Maxwell [redsymbol.net](http://redsymbol.net/articles/unofficial-bash-strict-mode/)
+* Bash Variables [gnu.org](https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html)

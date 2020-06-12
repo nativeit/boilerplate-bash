@@ -8,6 +8,9 @@
 ### 5. implement the different actions you defined in 2. in main()
 ### ==============================================================================
 
+readonly PROGVERS="@version"
+readonly PROGAUTH="@email"
+
 list_options() {
   ### Change the next lines to reflect which flags/options/parameters you need
   ### flag:   switch a flag 'on' / no extra parameter / e.g. "-v" for verbose
@@ -22,7 +25,7 @@ echo -n "
 flag|h|help|show usage
 flag|q|quiet|no output
 flag|v|verbose|output more
-flag|f|force|do not ask for confirmation
+flag|f|force|do not ask for confirmation (always yes)
 option|l|logd|folder for log files |log
 option|t|tmpd|folder for temp files|.tmp
 #you could also use /tmp/$PROGNAME as the default temp folder
@@ -35,18 +38,21 @@ param|n|inputs|input files
 " | grep -v '^#'
 }
 
+prefix_fmt=""
 # uncomment next line to have time prefix for every output line
 #prefix_fmt='+%H:%M:%S | '
-prefix_fmt=""
-runasroot=-1
+
 # runasroot = 0 :: don't check anything
 # runasroot = 1 :: script MUST run as root
 # runasroot = -1 :: script MAY NOT run as root
+runasroot=-1
+
 #####################################################################
 ################### DO NOT MODIFY BELOW THIS LINE ###################
 
 # set strict mode -  via http://redsymbol.net/articles/unofficial-bash-strict-mode/
-set -euo pipefail
+# removed -e because it made basic testing difficult
+set -uo pipefail
 IFS=$'\n\t'
 hash(){
   if [[ -n $(which md5sum) ]] ; then
@@ -64,18 +70,16 @@ readonly PROGFNAME=$(basename "$0")
 readonly PROGDIRREL=$(dirname "$0")
 if [[ -z "$PROGDIRREL" ]] ; then
 	# script called without  path specified ; must be in $PATH somewhere
-	readonly PROGFULLPATH=$(which "$0")
-	readonly PROGDIR=$(dirname "$PROGFULLPATH")
+  readonly PROGFULLPATH=$(which "$0")
+  readonly PROGDIR=$(dirname "$PROGFULLPATH")
 else
-	readonly PROGDIR=$(cd "$PROGDIRREL"; pwd)
+  readonly PROGDIR=$(cd "$PROGDIRREL"; pwd)
   readonly PROGFULLPATH="$PROGDIR/$PROGFNAME"
 fi
 readonly PROGLINES=$(< "$PROGFULLPATH" awk 'END {print NR}')
 readonly PROGHASH=$(< "$PROGFULLPATH" hash)
 readonly PROGUUID="L:${PROGLINES}-MD:${PROGHASH}"
 # this is version of bash-boilerplate - replace by versioning of your script; start at 1.0.0
-readonly PROGVERS="@version"
-readonly PROGAUTH="@email"
 readonly TODAY=$(date "+%Y-%m-%d")
 readonly PROGIDEN="«${PROGNAME} ${PROGVERS}»"
 [[ -z "${TEMP:-}" ]] && TEMP=/tmp
@@ -138,7 +142,7 @@ out() {
   ((quiet)) && return
   local message="$*"
   local prefix=""
-  if [[ -n $prefix_fmt ]]; then
+  if is_not_empty "$prefix_fmt" ; then
     prefix=$(date "$prefix_fmt")
   fi
   printf '%b\n' "$prefix$message";
@@ -160,16 +164,20 @@ progress() {
 #TIP: use «progress» to show one line of progress that will be overwritten by the next output
 #TIP:> progress "Now generating file $nb of $total ..."
 
-trap "die \$PROGIDEN: [\$BASH_COMMAND] failed with error code \$?" INT TERM EXIT
+error_prefix="${col_red}>${col_reset}"
+trap "die \"ERROR \$? after \$SECONDS seconds \n\
+${error_prefix} last command : '\$BASH_COMMAND' \" \
+\$(< $PROGFULLPATH awk -v lineno=\$LINENO \
+'NR == lineno {print \"${error_prefix} from line \" lineno \" : \" \$0}')" INT TERM EXIT
 # cf https://askubuntu.com/questions/513932/what-is-the-bash-command-variable-good-for
 # trap 'echo ‘$BASH_COMMAND’ failed with error code $?' ERR
 safe_exit() { 
   [[ -n "$tmpfile" ]] && [[ -f "$tmpfile" ]] && rm "$tmpfile"
   trap - INT TERM EXIT
-  exit
+  exit 0
 }
 
-is_set()       { [[ "$1" -gt 0 ]] ; }
+is_set()       { [[ "$1" -gt 0 ]]; }
 is_empty()     { [[ -z "$1" ]] ; }
 is_not_empty() { [[ -n "$1" ]] ; }
 #TIP: use «is_empty» and «is_not_empty» to test for variables
@@ -178,8 +186,9 @@ is_not_empty() { [[ -n "$1" ]] ; }
 is_file() { [[ -f "$1" ]] ; }
 is_dir()  { [[ -d "$1" ]] ; }
 
-die()     { out "${col_red}${char_fail} $PROGIDEN${col_reset}: $*" >&2; safe_exit; }
-fail()    { out "${col_red}${char_fail} $PROGIDEN${col_reset}: $*" >&2; safe_exit; }
+
+die()     { tput bel; out "${col_red}${char_fail} $PROGIDEN${col_reset}: $*" >&2; safe_exit; }
+fail()    { tput bel; out "${col_red}${char_fail} $PROGIDEN${col_reset}: $*" >&2; safe_exit; }
 #TIP: use «die» to show error message and exit program
 #TIP:> if [[ ! -f $output ]] ; then ; die "could not create output" ; fi
 
@@ -191,16 +200,12 @@ success() { out "${col_grn}${char_succ}${col_reset}  $*"; }
 #TIP: use «success» to show success message but continue
 #TIP:> if [[ -f $output ]] ; then ; success "output was created!" ; fi
 
-announce()  { out "${col_grn}${char_wait}${col_reset}  $*"; sleep 1 ; }
+announce(){ out "${col_grn}${char_wait}${col_reset}  $*"; sleep 1 ; }
 #TIP: use «announce» to show the start of a task
 #TIP:> announce "now generating the reports"
 
-log() { if [[ $verbose -gt 0 ]] ; then
-  out "${col_ylw}# $* ${col_reset}"
-fi ;   }
-debug() { if [[ $verbose -gt 0 ]] ; then
-  out "${col_ylw}# $* ${col_reset}"
-fi ;   }
+log()   { is_set $verbose && out "${col_ylw}# $* ${col_reset}" ; }
+debug() { is_set $verbose && out "${col_ylw}# $* ${col_reset}" ; }
 #TIP: use «log» to show information that will only be visible when -v is specified
 #TIP:> log "input file: [$inputname] - [$inputsize] MB"
 	  
@@ -213,7 +218,7 @@ ucase()   { echo "$*" | awk '{print toupper($0)}' ; }
 #TIP: use «lcase» and «ucase» to convert to upper/lower case
 #TIP:> param=$(lcase $param)
 
-confirm() { [[ $force -gt 0 ]] && return 0; read -r -p "$1 [y/N] " -n 1; echo " "; [[ $REPLY =~ ^[Yy]$ ]];}
+confirm() { is_set $force && return 0; read -r -p "$1 [y/N] " -n 1; echo " "; [[ $REPLY =~ ^[Yy]$ ]];}
 #TIP: use «confirm» for interactive confirmation before doing something
 #TIP:> if ! confirm "Delete file"; then ; echo "skip deletion" ;   fi
 
@@ -221,8 +226,14 @@ ask() {
   # $1 = variable name
   # $2 = question
   # $3 = default value  
-  printf "%s%s%s ", "$col_ylw", "$2", "${col_reset}"
-  read -r -e -p " " -i "$3" "$1"
+  # not using read -i because that doesn't work on MacOS
+  local ANSWER
+  read -r -p "$2 ($3) > " ANSWER
+  if [[ -z "$ANSWER" ]] ; then
+    eval "$1=\"$3\""
+  else
+    eval "$1=\"$ANSWER\""
+  fi
 }
 #TIP: use «ask» for interactive setting of variables
 #TIP:> ask NAME "What is your name" "Peter"
@@ -232,7 +243,7 @@ os_uname=$(uname -s)
 os_bits=$(uname -m)
 os_version=$(uname -v)
 
-on_mac()	{ [[ "$os_uname" = "Darwin" ]] ;	}
+on_mac()	  { [[ "$os_uname" = "Darwin" ]] ;	}
 on_linux()	{ [[ "$os_uname" = "Linux" ]] ;	}
 
 on_32bit()	{ [[ "$os_bits"  = "i386" ]] ;	}
@@ -315,26 +326,25 @@ run_only_show_errors(){
 
 verify_programs(){
   log "Running: on $os_uname ($os_version)"
-  listprogs="$*"
-  listhash=$(echo "$*" | hash)
-  okfile="$PROGDIR/.$PROGNAME.$listhash.verified"
-  if [[ -f "$okfile" ]] ; then
-    log "Verify : $listprogs -- cached]"
+  hash_programs=$(echo "$*" | hash)
+  verify_cache="$PROGDIR/.$PROGNAME.$hash_programs.verified"
+  if [[ -f "$verify_cache" ]] ; then
+    log "Verify : $(echo $*) (cached)"
   else 
-    log "Verify : $listprogs"
-    okall=1
+    log "Verify : $(echo $*)"
+    programs_ok=1
     for prog in "$@" ; do
       if [[ -z $(which "$prog") ]] ; then
         alert "$PROGIDEN needs [$prog] but this program cannot be found on this $os_uname machine"
-        okall=0
+        programs_ok=0
       fi
     done
-    if [[ $okall -eq 1 ]] ; then
+    if [[ $programs_ok -eq 1 ]] ; then
       (
         echo "$PROGNAME: check required programs OK"
         echo "$*"
         date 
-      ) > "$okfile"
+      ) > "$verify_cache"
     fi
   fi
 }
@@ -418,8 +428,12 @@ parse_options() {
     fi
 
     # special case: init
-    if [[ "$1" == "init" ]] || [[ "$1" == "INIT" ]] ; then
+    if [[ $(lcase "$1") == "init" ]] ; then
       action=init
+      return
+    fi
+    if [[ $(lcase "$1") == "test" ]] ; then
+      action=test
       return
     fi
     ## then run through the given parameters
@@ -472,8 +486,38 @@ parse_options() {
 #####################################################################
 
 ## Put your helper scripts here
-#TIP: use «run_only_show_errors» to run a program and only show the output if there was an error
-#TIP:> run_only_show_errors mv $tmpd/* $outd/
+
+create_script_from_template(){
+  out "## SCRIPT INITIALISATION"
+  if [[ "@email" == @* ]] ; then
+    out "let's create a new project and remove everything you don't need!"
+    ask EMAIL "What is your email address?" "$USER@$HOSTNAME"
+    ask NEWNAME "What is the name of your script?" "newscript.sh"
+    ask VERSION "What is the version of your script?" "1.0.0"
+    < "$PROGFULLPATH" awk -v email="$EMAIL" -v version="$VERSION" '{gsub(/@version/,version); gsub(/@email/,email); print$0}' > "$NEWNAME"
+    if [[ -d $PROGDIR/usage ]] ; then
+      if confirm "Delete all non-essential files? "; then
+        rm -fr "$PROGDIR/usage"
+        rm -fr "$PROGDIR/docs"
+      fi
+    fi
+  else
+    die "This is no longer a template script, it was already initialised by @email - please start from original script.sh"
+  fi
+}
+
+run_tests(){
+    # just show all options/params with values
+    local show_commands=$(list_options \
+    | awk '
+    BEGIN { FS="|"; OFS=" ";}
+    $1 ~ /flag|option/ {print "out \"-" $2 "/--" $3 " = $" $3 " (" $1 ")\""}
+    $1 ~ /param/ {print "out \"[" $3 "] (" $1 ")\""}
+    ')
+    if [[ -n "$show_commands" ]] ; then
+        eval "$show_commands"
+   fi
+}
 
 perform_action1(){
   OUTPUT="$1"
@@ -491,7 +535,11 @@ perform_action2(){
   # < "$1"  do_stuff > "$2"
 }
 
+#####################################################################
 ## Put your main script here
+#####################################################################
+
+
 main() {
     log "Program: $PROGFNAME $PROGVERS ($PROGUUID)"
     log "Updated: $PROGDATE"
@@ -515,24 +563,11 @@ main() {
     action=$(lcase "$action")
     case $action in
     init )
-        # used as first run of the script: delete what is not necessary
-        out "## SCRIPT INITIALISATION"
-        if [[ "@email" == @* ]] ; then
-          out "let's create a new project and remove everything you don't need!"
-          ask EMAIL "What is your email address?" "$USER@$HOSTNAME"
-          ask NEWNAME "What is the name of your script?" "newscript.sh"
-          ask VERSION "What is the version of your script?" "1.0.0"
-          < "$PROGFULLPATH" awk -v email="$EMAIL" -v version="$VERSION" '{gsub(/@version/,version); gsub(/@email/,email); print$0}' > "$NEWNAME"
-          if [[ -d $PROGDIR/usage ]] ; then
-            if confirm "Delete all non-relevant files? "; then
-              rm -fr "$PROGDIR/usage"
-              rm -fr "$PROGDIR/docs"
-            fi
-          fi
-        else
-          die "This is no longer a template script, it was already initialised by @email - please start from original script.sh"
-        fi
+        create_script_from_template
+        ;;
 
+    test )
+        run_tests
         ;;
 
     action2 )
@@ -547,10 +582,13 @@ main() {
 #####################################################################
 ################### DO NOT MODIFY BELOW THIS LINE ###################
 
-log "-------- PREPARE $PROGIDEN" # this will show up even if your main() has errors
+ # this will show up even if your main() has errors
+log "-------- PREPARE $PROGIDEN"
 init_options
 parse_options "$@"
-log "-------- STARTING (main) $PROGIDEN" # this will show up even if your main() has errors
+# this will show up even if your main() has errors
+log "-------- STARTING (main) $PROGIDEN"
 main
-log "-------- FINISH   (main) $PROGIDEN" # a start needs a finish
+# main program is finished
+log "-------- FINISH   (main) $PROGIDEN" 
 safe_exit
