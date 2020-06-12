@@ -6,7 +6,7 @@ on:
     branches: [ master ]
 
 jobs:
-  check:
+  shellcheck:
     runs-on: ubuntu-latest
 
     steps:
