@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# test functions should start with test_
-test_should_print_hello_world() {
-  assert_equals "Hello world!" "$(echo 'Hello world!')"
-}
-

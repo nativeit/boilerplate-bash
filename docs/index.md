@@ -35,8 +35,8 @@ becomes
 
 ### USAGE
       Program: script.sh by @email
-      Version: @version (L:594-MD:05e6d1)
-      Updated: Jun 12 13:56:27 2020
+      Version: @version (L:591-MD:3f7bbf)
+      Updated: Jun 13 10:23:44 2020
       Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
       Flags, options and parameters:
           -h|--help      : [flag] show usage [default: off]
@@ -81,6 +81,7 @@ becomes
 
 ### VERSION HISTORY
 
+* v1.7: all editable content to the front of the file
 * v1.6: introduce semver versioning, Bash CI
 * v1.5: fixed last shellcheck warnings - https://github.com/koalaman/shellcheck
 * v1.4: fix md5sum problem, add script authoring tips, automated README creation
@@ -89,7 +90,8 @@ becomes
 * v1.1: better single and multi param parsing
 * v1.0: first release
 
- ### CREATE NEW BASH SCRIPT
+ 
+### CREATE NEW BASH SCRIPT
 
 #### Option 1: clone this repo
 	

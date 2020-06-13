@@ -10,6 +10,14 @@
 
 readonly PROGVERS="@version"
 readonly PROGAUTH="@email"
+# uncomment next line to have time prefix for every output line
+#prefix_fmt='+%H:%M:%S | '
+readonly prefix_fmt=""
+
+# runasroot = 0 :: don't check anything
+# runasroot = 1 :: script MUST run as root
+# runasroot = -1 :: script MAY NOT run as root
+runasroot=-1
 
 list_options() {
   ### Change the next lines to reflect which flags/options/parameters you need
@@ -38,14 +46,54 @@ param|n|inputs|input files
 " | grep -v '^#'
 }
 
-prefix_fmt=""
-# uncomment next line to have time prefix for every output line
-#prefix_fmt='+%H:%M:%S | '
+## Put your helper scripts here
 
-# runasroot = 0 :: don't check anything
-# runasroot = 1 :: script MUST run as root
-# runasroot = -1 :: script MAY NOT run as root
-runasroot=-1
+perform_action1(){
+  OUTPUT="$1"
+  shift
+  echo INPUTS = "$*"
+  echo OUTPUT = "$OUTPUT"
+  # < "$1"  do_stuff > "$2"
+}
+
+perform_action2(){
+  OUTPUT="$1"
+  shift
+  echo INPUTS = "$*"
+  echo OUTPUT = "$OUTPUT"
+  # < "$1"  do_stuff > "$2"
+}
+
+#####################################################################
+## Put your main script here
+#####################################################################
+
+main() {
+    log "Program: $PROGFNAME $PROGVERS ($PROGUUID)"
+    log "Updated: $PROGDATE"
+    log "Run as : $USER@$HOSTNAME"
+    # add programs you need in your script here, like tar, wget, ffmpeg, rsync ...
+    verify_programs awk curl cut date echo find grep head printf sed stat tail uname wc
+    prep_log_and_temp_dir
+
+    action=$(lcase "$action")
+    case $action in
+    init )
+        create_script_from_template
+        ;;
+
+    test )
+        run_tests
+        ;;
+
+    action2 )
+        #perform_action2 "$output" $inputs
+        ;;
+
+    *)
+        die "param [$action] not recognized"
+    esac
+}
 
 #####################################################################
 ################### DO NOT MODIFY BELOW THIS LINE ###################
@@ -326,12 +374,13 @@ run_only_show_errors(){
 
 verify_programs(){
   log "Running: on $os_uname ($os_version)"
-  hash_programs=$(echo "$*" | hash)
+  list_programs=$(echo "$*" | sort -u |  tr "\n" " ")
+  hash_programs=$(echo "$list_programs" | hash)
   verify_cache="$PROGDIR/.$PROGNAME.$hash_programs.verified"
   if [[ -f "$verify_cache" ]] ; then
-    log "Verify : $* (cached)"
+    log "Verify : $list_programs (cached)"
   else 
-    log "Verify : $*"
+    log "Verify : $list_programs"
     programs_ok=1
     for prog in "$@" ; do
       if [[ -z $(which "$prog") ]] ; then
@@ -342,7 +391,7 @@ verify_programs(){
     if [[ $programs_ok -eq 1 ]] ; then
       (
         echo "$PROGNAME: check required programs OK"
-        echo "$*"
+        echo "$list_programs"
         date 
       ) > "$verify_cache"
     fi
@@ -479,14 +528,6 @@ parse_options() {
   fi
 }
 
-[[ $runasroot == 1  ]] && [[ $UID -ne 0 ]] && die "MUST be root to run this script"
-[[ $runasroot == -1 ]] && [[ $UID -eq 0 ]] && die "CANNOT be root to run this script"
-
-################### DO NOT MODIFY ABOVE THIS LINE ###################
-#####################################################################
-
-## Put your helper scripts here
-
 create_script_from_template(){
   out "## SCRIPT INITIALISATION"
   if [[ "@email" == @* ]] ; then
@@ -519,68 +560,24 @@ run_tests(){
    fi
 }
 
-perform_action1(){
-  OUTPUT="$1"
-  shift
-  echo INPUTS = "$*"
-  echo OUTPUT = "$OUTPUT"
-  # < "$1"  do_stuff > "$2"
+prep_log_and_temp_dir(){
+  if [[ -n "$tmpd" ]] ; then
+    folder_prep "$tmpd" 1
+    tmpfile=$(mktemp "$tmpd/$TODAY.XXXXXX")
+    log "Tmpfile: $tmpfile"
+    # you can use this teporary file in your program
+    # it will be deleted automatically if the program ends without problems
+  fi
+  if [[ -n "$logd" ]] ; then
+    folder_prep "$logd" 7
+    logfile=$logd/$PROGNAME.$TODAY.log
+    log "Logfile: $logfile"
+    echo "$(date '+%H:%M:%S') | [$PROGFNAME] $PROGVERS ($PROGUUID) started" >> "$logfile"
+  fi
 }
+[[ $runasroot == 1  ]] && [[ $UID -ne 0 ]] && die "MUST be root to run this script"
+[[ $runasroot == -1 ]] && [[ $UID -eq 0 ]] && die "CANNOT be root to run this script"
 
-perform_action2(){
-  OUTPUT="$1"
-  shift
-  echo INPUTS = "$*"
-  echo OUTPUT = "$OUTPUT"
-  # < "$1"  do_stuff > "$2"
-}
-
-#####################################################################
-## Put your main script here
-#####################################################################
-
-
-main() {
-    log "Program: $PROGFNAME $PROGVERS ($PROGUUID)"
-    log "Updated: $PROGDATE"
-    log "Run as : $USER@$HOSTNAME"
-    if [[ -n "$tmpd" ]] ; then
-      folder_prep "$tmpd" 1
-      tmpfile=$(mktemp "$tmpd/$TODAY.XXXXXX.tmp")
-      log "Tmpfile: $tmpfile"
-      # you can use this teporary file in your program
-      # it will be deleted automatically if the program ends without problems
-    fi
-    if [[ -n "$logd" ]] ; then
-      folder_prep "$logd" 7
-      logfile=$logd/$PROGNAME.$TODAY.log
-      log "Logfile: $logfile"
-      echo "$(date '+%H:%M:%S') | [$PROGFNAME] $PROGVERS ($PROGUUID) started" >> "$logfile"
-    fi
-    verify_programs "awk curl cut date echo find grep head printf sed stat tail uname wc"
-    # add programs you need in your script here, like tar, wget, ...
-
-    action=$(lcase "$action")
-    case $action in
-    init )
-        create_script_from_template
-        ;;
-
-    test )
-        run_tests
-        ;;
-
-    action2 )
-        #perform_action2 "$output" $inputs
-        ;;
-
-    *)
-        die "param [$action] not recognized"
-    esac
-}
-
-#####################################################################
-################### DO NOT MODIFY BELOW THIS LINE ###################
 
  # this will show up even if your main() has errors
 log "-------- PREPARE $PROGIDEN"
