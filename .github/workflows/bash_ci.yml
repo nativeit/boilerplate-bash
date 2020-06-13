@@ -16,4 +16,4 @@ jobs:
       run: ls ./*.sh | xargs bash
 
     - name: Unit testing with bash_unit
-      run: tests/bash_unit tests/test_*
+      run: [[ -f "tests/test_*" ]] && tests/bash_unit tests/test_*
