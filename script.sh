@@ -73,7 +73,7 @@ main() {
     log "Updated: $PROGDATE"
     log "Run as : $USER@$HOSTNAME"
     # add programs you need in your script here, like tar, wget, ffmpeg, rsync ...
-    verify_programs awk curl cut date echo find grep head printf sed stat tail uname wc
+    verify_programs awk basename cut date dirname find grep head mkdir sed stat tput uname wc
     prep_log_and_temp_dir
 
     action=$(lcase "$action")
@@ -179,7 +179,7 @@ else
   readonly char_wait="..."
 fi
 
-readonly nbcols=$(tput cols)
+readonly nbcols=$(tput cols || echo 80)
 readonly wprogress=$((nbcols - 5))
 #readonly nbrows=$(tput lines)
 
@@ -229,7 +229,7 @@ is_set()       { [[ "$1" -gt 0 ]]; }
 is_empty()     { [[ -z "$1" ]] ; }
 is_not_empty() { [[ -n "$1" ]] ; }
 #TIP: use «is_empty» and «is_not_empty» to test for variables
-#TIP:> if ! confirm "Delete file"; then ; echo "skip deletion" ;   fi
+#TIP:> if is_empty "$email" ; then ; echo "Need Email!" ; fi
 
 is_file() { [[ -f "$1" ]] ; }
 is_dir()  { [[ -d "$1" ]] ; }
@@ -488,7 +488,7 @@ parse_options() {
     ## then run through the given parameters
   if expects_single_params ; then
     #log "Process: single params"
-    single_params=$(list_options | grep 'param|1|' | cut -d'|' -f3)
+    single_params=$(list_options | grep 'param|1|' | cut -d'|' -f3 | xargs)
     nb_singles=$(echo "$single_params" | wc -w)
     log "Expect : $nb_singles single parameter(s): $single_params"
     [[ $# -eq 0 ]] && die "need the parameter(s) [$single_params]"

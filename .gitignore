@@ -1,4 +1,6 @@
-log/*
-tmp/*
-cache/*
 .*
+.*/
+log/
+tmp/
+cache/*
+tests/log

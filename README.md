@@ -35,8 +35,8 @@ becomes
 
 ### USAGE
       Program: script.sh by @email
-      Version: @version (L:591-MD:3f7bbf)
-      Updated: Jun 13 10:23:44 2020
+      Version: @version (L:591-MD:e00342)
+      Updated: Jun 13 10:33:50 2020
       Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
       Flags, options and parameters:
           -h|--help      : [flag] show usage [default: off]
