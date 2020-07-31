@@ -1,7 +1,7 @@
 ![Bash CI](https://github.com/pforret/bash-boilerplate/workflows/Bash%20CI/badge.svg) 
 ![Shellcheck CI](https://github.com/pforret/bash-boilerplate/workflows/Shellcheck%20CI/badge.svg)
 ![version](https://img.shields.io/github/v/release/pforret/bash-boilerplate?include_prereleases)
-![activity](https://img.shields.io/github/commit-activity/m/pforret/bash-boilerplate)
+![activity](https://img.shields.io/github/commit-activity/y/pforret/bash-boilerplate)
 ![license](https://img.shields.io/github/license/pforret/bash-boilerplate)
 ![repo size](https://img.shields.io/github/repo-size/pforret/bash-boilerplate)
 
@@ -35,8 +35,8 @@ becomes
 
 ### USAGE
       Program: script.sh by @email
-      Version: @version (L:591-MD:e00342)
-      Updated: Jun 13 10:33:50 2020
+      Version: @version (L:591-MD:6523f7)
+      Updated: Jul 31 20:07:24 2020
       Usage: script.sh [-h] [-q] [-v] [-f] [-l <logd>] [-t <tmpd>] <action> <output> <inputs …>
       Flags, options and parameters:
           -h|--help      : [flag] show usage [default: off]
@@ -55,7 +55,7 @@ becomes
       * use progress to show one line of progress that will be overwritten by the next output
         progress "Now generating file $nb of $total ..."
       * use is_empty and is_not_empty to test for variables
-        if ! confirm "Delete file"; then ; echo "skip deletion" ; fi
+        if is_empty "$email" ; then ; echo "Need Email!" ; fi
       * use die to show error message and exit program
         if [[ ! -f $output ]] ; then ; die "could not create output" ; fi
       * use alert to show alert message but continue
