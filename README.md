@@ -7,8 +7,8 @@
 
 ### BASH BOILERPLATE
 
-	UPDATE: This repo is no longer under development!!
-	please check [github.com/pforret/bashew](https://github.com/pforret/bashew) for a more modern version of this project
+UPDATE: This repo is no longer under development!!
+please check [github.com/pforret/bashew](https://github.com/pforret/bashew) for a more modern version of this project
 
 It's like a mini console framework for bash shell scripting.
 
