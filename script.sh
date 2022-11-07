@@ -1,15 +1,56 @@
 #!/usr/bin/env bash
-### ==============================================================================
-### SO HOW DO YOU PROCEED WITH YOUR SCRIPT?
-### 1. run "script.sh init"
-### 2. define the options/parameters and defaults you need in list_options() 
-### 3. define functions your might need by changing/adding to perform_action1()
-### 4. add binaries your script needs (e.g. ffmpeg) to verify_programs awk (...) wc
-### 5. implement the different actions you defined in 2. in main()
-### ==============================================================================
 
+#                                                           𝝢𝝠𝝩𝝞𝗩𝝣⧟𝝞𝝩
+# | ------------------------------------------------------------------------- |
+# |                                                                           |
+# |  | --------------------------- |                                          |
+# |  |  Script Title							 |                                          |
+# |  | --------------------------- |                                          |
+# |                                                                           |
+# | -------------------------------------------------------------------------	|
+#
+# | ------------------------------------------------------------------------- |
+# |                                                 rev. 2022-08-09 by sdavis |
+# | -------------------------------------------------------------------------	|
+#     ⧉ www.nativeit.net         𝑖𝑚𝑎𝑔𝑖𝑛𝑎𝑡𝑖𝑜𝑛 ✚ 𝑡𝑒𝑐ℎ𝑛𝑜𝑙𝑜𝑔𝑦
+
+# | -------------------------------------------------------------------------	|
+# |                                                                           |
+# |	HOW TO CONFIGURE THIS SCRIPT BOILERPLATE                                 	|
+# |                                                                           |
+# |		1. run "script.sh init"                             								    |
+# |		2. define the options/parameters in list_options()                      |
+# |		3. define functions by changing/adding to perform_action1()            	|
+# |		4. add req'd binaries (e.g. ffmpeg) to verify_programs awk (...) wc   	|
+# |		5. implement the different actions you defined in 2. in main()         	|
+# |                                                                           |
+# | -------------------------------------------------------------------------	|
+
+
+# ------------------------------------- #
+# Setup                                 #
+# ------------------------------------- #
+
+# Set colors
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Background
+ON_BLACK='\033[40m'       # BLACK
+ON_RED='\033[41m'         # RED
+ON_GREEN='\033[42m'       # GREEN
+ON_YELLOW='\033[43m'      # YELLOW
+ON_BLUE='\033[44m'        # BLUE
+ON_PURPLE='\033[45m'      # PURPLE
+ON_CYAN='\033[46m'        # CYAN
+ON_WHITE='\033[47m'       # WHITE
+
+
+# Set author and version info
 readonly PROGVERS="@version"
 readonly PROGAUTH="@email"
+
 # uncomment next line to have time prefix for every output line
 #prefix_fmt='+%H:%M:%S | '
 readonly prefix_fmt=""
@@ -17,7 +58,27 @@ readonly prefix_fmt=""
 # runasroot = 0 :: don't check anything
 # runasroot = 1 :: script MUST run as root
 # runasroot = -1 :: script MAY NOT run as root
-runasroot=-1
+runasroot=0
+
+# halt execution immediately on failure
+# note there are some scenarios in which this will not exit;
+# see https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html
+# for additional details
+set -e
+
+# Set Internal Field Seperator for well behaved arguments
+IFS=$'\n\t'
+
+# Check if script is being executed in a CI process
+is_ci=
+for i in "$@"; do
+    case "$i" in
+        -y)
+        is_ci=true
+        shift # past argument=value
+        ;;
+    esac
+done
 
 list_options() {
   ### Change the next lines to reflect which flags/options/parameters you need
@@ -46,8 +107,10 @@ param|n|inputs|input files
 " | grep -v '^#'
 }
 
-## Put your helper scripts here
 
+# ------------------------------------- #
+# Define Functions/Scripts                      #
+# ------------------------------------- #
 perform_action1(){
   OUTPUT="$1"
   shift
@@ -64,9 +127,30 @@ perform_action2(){
   # < "$1"  do_stuff > "$2"
 }
 
-#####################################################################
-## Put your main script here
-#####################################################################
+# ------------------------------------- #
+# Main Script                           #
+# ------------------------------------- #
+
+# In non-ci scenarios, advertise what this script will do and
+# give user the option to exit
+if [ -z $is_ci ]; then
+    echo "This script will ..."
+
+    while true; do
+        read -p "Do you want to continue? [Y/n] " yn
+        case $yn in
+            [Yy]*|"")
+                break
+            ;;
+            [Nn]*)
+                exit
+            ;;
+            *)
+                echo "Please answer yes or no."
+            ;;
+        esac
+    done
+fi
 
 main() {
     log "Program: $PROGFNAME $PROGVERS ($PROGUUID)"
@@ -95,8 +179,12 @@ main() {
     esac
 }
 
-#####################################################################
-################### DO NOT MODIFY BELOW THIS LINE ###################
+
+# | -------------------------------------------------------------------------	|
+# |                                                                           |
+# |    ################# DO NOT MODIFY BELOW THIS LINE ###################    |
+# |                                                                           |
+# | -------------------------------------------------------------------------	|
 
 # set strict mode -  via http://redsymbol.net/articles/unofficial-bash-strict-mode/
 # removed -e because it made basic [[ testing ]] difficult
