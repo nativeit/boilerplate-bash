@@ -20,7 +20,7 @@
 # |  |  INSTRUCTIONS               |                                          |
 # |  | --------------------------- |                                          |
 # |                                                                           |
-# |   1. run "script.sh init"                             								    |
+# |   1. run "script.sh init"                                                 |
 # |   2. define the options/parameters in list_options()                      |
 # |   3. define functions by changing/adding to perform_action1()             |
 # |   4. add req'd binaries (e.g. ffmpeg) to verify_programs awk (...) wc     |
