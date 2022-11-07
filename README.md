@@ -1,14 +1,15 @@
-![Bash CI](https://github.com/pforret/bash-boilerplate/workflows/Bash%20CI/badge.svg) 
-![Shellcheck CI](https://github.com/pforret/bash-boilerplate/workflows/Shellcheck%20CI/badge.svg)
-![version](https://img.shields.io/github/v/release/pforret/bash-boilerplate?include_prereleases)
-![activity](https://img.shields.io/github/commit-activity/y/pforret/bash-boilerplate)
-![license](https://img.shields.io/github/license/pforret/bash-boilerplate)
-![repo size](https://img.shields.io/github/repo-size/pforret/bash-boilerplate)
+![Bash CI](https://github.com/nativeit/boilerplate-bash/workflows/Bash%20CI/badge.svg)
+![Shellcheck CI](https://github.com/nativeit/boilerplate-bash/workflows/Shellcheck%20CI/badge.svg)
+![version](https://img.shields.io/github/v/release/nativeit/boilerplate-bash?include_prereleases)
+![activity](https://img.shields.io/github/commit-activity/y/nativeit/boilerplate-bash)
+![license](https://img.shields.io/github/license/nativeit/boilerplate-bash)
+![repo size](https://img.shields.io/github/repo-size/nativeit/boilerplate-bash)
 
 ### BASH BOILERPLATE
 
-UPDATE: This repo is no longer under development!!
-please check [github.com/pforret/bashew](https://github.com/pforret/bashew) for a more modern version of this project
+NOTE: This repo is a fork of from the precursor to a much better and more capable project: [github.com/pforret/bashew](https://github.com/pforret/bashew)
+
+---
 
 It's like a mini console framework for bash shell scripting.
 
